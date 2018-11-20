@@ -54,8 +54,15 @@ class TextDataset(DatasetBase):
         # at minimum the src tokens and their indices and potentially also
         # the src and tgt features and alignment information.
         if tgt_examples_iter is not None:
+            # src in src_examples_iter looks like this:
+            #      {'src': ('It', 'is', ..., '.'), 'indices': 0}
             examples_iter = (self._join_dicts(src, tgt) for src, tgt in
                              zip(src_examples_iter, tgt_examples_iter))
+
+            # ex in examples_iter now looks like this:
+            #      {'src': ('It', 'is', ..., '.'),
+            #       'tgt': ('Es', 'geht', ..., '.'), 'indices': 0}
+
         else:
             examples_iter = src_examples_iter
 
@@ -82,6 +89,8 @@ class TextDataset(DatasetBase):
             src_size += len(example.src)
             out_examples.append(example)
 
+        self.num_examples_before_filtering = len(out_examples)
+
         def filter_pred(example):
             """ ? """
             return 0 < len(example.src) <= src_seq_length \
@@ -89,6 +98,7 @@ class TextDataset(DatasetBase):
 
         filter_pred = filter_pred if use_filter_pred else lambda x: True
 
+        # torchtext.data.Dataset(examples, fields, filter_pred=None)
         super(TextDataset, self).__init__(
             out_examples, out_fields, filter_pred
         )

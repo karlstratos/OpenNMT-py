@@ -96,6 +96,10 @@ class TranslationBuilder(object):
                     src_vocab, src_raw,
                     tgt[1:, b] if tgt is not None else None, None)
 
+                # gold_sent:
+                # ['Keine', '<unk>', '<unk>', 'für', '<unk>', 'durch', 'das',
+                #  'Parlament']
+
             translation = Translation(src[:, b] if src is not None else None,
                                       src_raw, pred_sents,
                                       attn[b], pred_score[b], gold_sent,

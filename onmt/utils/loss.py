@@ -142,7 +142,14 @@ class LossComputeBase(nn.Module):
         range_ = (cur_trunc, cur_trunc + trunc_size)
         shard_state = self._make_shard_state(batch, output, range_, attns)
         for shard in shards(shard_state, shard_size):
+            #-------------------------------------------------------------------
+            # shard_state['outout']: t-1 x B x d => shard['outout']: S x B x d
+            # shard_state['target']: t-1 x B x 1 => shard['target']: S x B x 1
+            #
+            # (S = min(shard_size, t-1))
+            #-------------------------------------------------------------------
             loss, stats = self._compute_loss(batch, **shard)
+
             loss.div(float(normalization)).backward()
             batch_stats.update(stats)
         return batch_stats
@@ -184,22 +191,42 @@ class LabelSmoothingLoss(nn.Module):
         self.padding_idx = ignore_index
         super(LabelSmoothingLoss, self).__init__()
 
+        # Put eps/(V-1) on every false target word (modulo pading).
         smoothing_value = label_smoothing / (tgt_vocab_size - 2)
         one_hot = torch.full((tgt_vocab_size,), smoothing_value)
-        one_hot[self.padding_idx] = 0
-        self.register_buffer('one_hot', one_hot.unsqueeze(0))
-
+        one_hot[self.padding_idx] = 0 # (account for pad)
+        self.register_buffer('one_hot', one_hot.unsqueeze(0))  # non-trainable
+                                                               # state to keep
         self.confidence = 1.0 - label_smoothing
+        #-------------------------------------
+        # one_hot: there is no one yet!
+        #-------------------------------------
 
     def forward(self, output, target):
         """
         output (FloatTensor): batch_size x n_classes
         target (LongTensor): batch_size
         """
+        #-----------------------------------------------------------------------
+        # Called for each truncated target: B sequences of length t. So
+        #
+        #    batch_size = SB (# predictions)
+        #    n_classes  = V
+        #
+        # (S = min(shard_size, t-1))
+        #-----------------------------------------------------------------------
         model_prob = self.one_hot.repeat(target.size(0), 1)
+
+        # Puts (1-smoothing_value) at target words.
         model_prob.scatter_(1, target.unsqueeze(1), self.confidence)
+
+        # Puts 0 at padding index.
         model_prob.masked_fill_((target == self.padding_idx).unsqueeze(1), 0)
 
+        #-------------------------------------------------------
+        #       output: SB x V (log probs)
+        #   model_prob: SB x V (probs)
+        #-------------------------------------------------------
         return F.kl_div(output, model_prob, reduction='sum')
 
 
@@ -222,7 +249,7 @@ class NMTLossCompute(LossComputeBase):
             )
         else:
             self.criterion = nn.NLLLoss(
-                ignore_index=self.padding_idx, reduction='sum'
+                ignore_index=self.padding_idx, reduction='sum'  # ignore <blank>
             )
 
     def _make_shard_state(self, batch, output, range_, attns=None):
@@ -242,7 +269,16 @@ class NMTLossCompute(LossComputeBase):
             scores = self.generator(bottled_output)
         gtruth = target.view(-1)
 
-        loss = self.criterion(scores, gtruth)
+        #---------------------------------------
+        # (S = min(shard_size, t-1))
+        #
+        #            output:  S x B x d
+        #    bottled_output: SB x d
+        #            scores: SB x V              (log probs)
+        #            gtruth: SB
+        #---------------------------------------
+        loss = self.criterion(scores, gtruth) # 1 x 1
+
         stats = self._stats(loss.clone(), scores, gtruth)
 
         return loss, stats

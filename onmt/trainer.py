@@ -32,6 +32,13 @@ def build_trainer(opt, device_id, model, fields,
         model_saver(:obj:`onmt.models.ModelSaverBase`): the utility object
             used to save the model
     """
+    logger.info('Building trainer.......')
+
+    if opt.copy_attn:
+        logger.info('* using copy generator loss')
+    else:
+        logger.info('* cross-entropy loss over %d tgt words (label smoothing '
+                    '%.1f)' % (len(fields["tgt"].vocab), opt.label_smoothing))
     train_loss = onmt.utils.loss.build_loss_compute(
         model, fields["tgt"].vocab, opt)
     valid_loss = onmt.utils.loss.build_loss_compute(
@@ -103,6 +110,9 @@ class Trainer(object):
         self.report_manager = report_manager
         self.model_saver = model_saver
 
+        self.last_validation_ppl = float('inf')
+        self.last_validation_acc = float('-inf')
+
         assert grad_accum_count > 0
         if grad_accum_count > 1:
             assert(self.trunc_size == 0), \
@@ -142,16 +152,31 @@ class Trainer(object):
         report_stats = onmt.utils.Statistics()
         self._start_report_manager(start_time=total_stats.start_time)
 
+        #-----------------------------------------------------------------------
+        # step = # batches processed (assuming grad_accum_count 1)
+        #-----------------------------------------------------------------------
         while step <= train_steps:
 
             reduce_counter = 0
             for i, batch in enumerate(train_iter):
+                # batch = torchtext.data.batch.Batch of size B
+                #
+                # batch.src: [T x B,         1 x B]
+                #               ^             ^
+                #            src seqs        lengths
+                #
+                # batch.tgt: T' x B
+                #              ^
+                #            tgt seqs
+                #
+                # batch.indices: 1 x B (e.g., [2498,  868, 7586])
+
                 if self.n_gpu == 0 or (i % self.n_gpu == self.gpu_rank):
                     if self.gpu_verbose_level > 1:
                         logger.info("GpuRank %d: index: %d accum: %d"
                                     % (self.gpu_rank, i, accum))
 
-                    true_batchs.append(batch)
+                    true_batchs.append(batch)  # len 1 (grad_accum_count 1)
 
                     if self.norm_method == "tokens":
                         num_tokens = batch.tgt[1:].ne(
@@ -172,6 +197,11 @@ class Trainer(object):
                                                 .all_gather_list
                                                 (normalization))
 
+                        # This gets one batch and can potentially make multiple
+                        # parameter updates based on trunc_size (only 1 update
+                        # if trunc_size > target_size). Each update can
+                        # potentially follow multiple loss computations based on
+                        # shard_size.
                         self._gradient_accumulation(
                             true_batchs, normalization, total_stats,
                             report_stats)
@@ -200,11 +230,15 @@ class Trainer(object):
                             self._report_step(self.optim.learning_rate,
                                               step, valid_stats=valid_stats)
 
+                            self.last_validation_ppl = valid_stats.ppl()
+                            self.last_validation_acc = valid_stats.accuracy()
+
                         if self.gpu_rank == 0:
                             self._maybe_save(step)
                         step += 1
                         if step > train_steps:
                             break
+
             if self.gpu_verbose_level > 0:
                 logger.info('GpuRank %d: we completed an epoch \
                             at step %d' % (self.gpu_rank, step))
@@ -249,6 +283,7 @@ class Trainer(object):
 
         return stats
 
+    #                            len(true_batchs) = 1  (grad_accum_count 1)
     def _gradient_accumulation(self, true_batchs, normalization, total_stats,
                                report_stats):
         if self.grad_accum_count > 1:
@@ -273,10 +308,21 @@ class Trainer(object):
                 src_lengths = None
 
             tgt_outer = inputters.make_features(batch, 'tgt')
+            #-------------------------------------------------------------------
+            # src:       T  x B x 1
+            # tgt_outer: T' x B x 1
+            #-------------------------------------------------------------------
+
 
             for j in range(0, target_size-1, trunc_size):
                 # 1. Create truncated target.
                 tgt = tgt_outer[j: j + trunc_size]
+                #---------------------------------------------------------------
+                # tgt:           trunc_size   x B x 1
+                # output:        trunc_size-1 x B x d
+                # attns['std']:  trunc_size-1 x B x T
+                #---------------------------------------------------------------
+
 
                 # 2. F-prop all but generator.
                 if self.grad_accum_count == 1:
@@ -285,9 +331,17 @@ class Trainer(object):
                     self.model(src, tgt, src_lengths)
 
                 # 3. Compute loss in shards for memory efficiency.
+                #---------------------------------------------------------------
+                # I.e., number of calls to _compute_loss is
+                #
+                #     trunc_size / shard_size
+                #
+                # trunc_size: -truncated_decoder
+                # shard_size: -max_generator_batches
+                #---------------------------------------------------------------
                 batch_stats = self.train_loss.sharded_compute_loss(
                     batch, outputs, attns, j,
-                    trunc_size, self.shard_size, normalization)
+                    trunc_size, self.shard_size, normalization)  # backprop'd
                 total_stats.update(batch_stats)
                 report_stats.update(batch_stats)
 
@@ -307,6 +361,10 @@ class Trainer(object):
                 # if dec_state is not None:
                 #    dec_state.detach()
                 if self.model.decoder.state is not None:
+                    # state['hidden']= (H, C) if LSTM, each:  (# layers) x B x d
+                    # state['input_feed'] = attn vector:               1 x B x d
+                    # state['coverage'] = None
+
                     self.model.decoder.detach_state()
 
         # in case of multi step gradient accumulation,
@@ -372,4 +430,6 @@ class Trainer(object):
         Save the model if a model saver is set
         """
         if self.model_saver is not None:
-            self.model_saver.maybe_save(step)
+            self.model_saver.maybe_save(step,
+                                        self.last_validation_ppl,
+                                        self.last_validation_acc)

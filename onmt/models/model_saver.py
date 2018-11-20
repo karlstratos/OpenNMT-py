@@ -40,7 +40,7 @@ class ModelSaverBase(object):
         if keep_checkpoint > 0:
             self.checkpoint_queue = deque([], maxlen=keep_checkpoint)
 
-    def maybe_save(self, step):
+    def maybe_save(self, step, ppl, acc):
         """
         Main entry point for model saver
         It wraps the `_save` method with checks and apply `keep_checkpoint`
@@ -52,7 +52,7 @@ class ModelSaverBase(object):
         if step % self.save_checkpoint_steps != 0:
             return
 
-        chkpt, chkpt_name = self._save(step)
+        chkpt, chkpt_name = self._save(step, ppl, acc)
 
         if self.keep_checkpoint > 0:
             if len(self.checkpoint_queue) == self.checkpoint_queue.maxlen:
@@ -60,7 +60,7 @@ class ModelSaverBase(object):
                 self._rm_checkpoint(todel)
             self.checkpoint_queue.append(chkpt_name)
 
-    def _save(self, step):
+    def _save(self, step, ppl, acc):
         """ Save a resumable checkpoint.
 
         Args:
@@ -94,7 +94,7 @@ class ModelSaver(ModelSaverBase):
             base_path, model, model_opt, fields, optim,
             save_checkpoint_steps, keep_checkpoint)
 
-    def _save(self, step):
+    def _save(self, step, ppl, acc):
         real_model = (self.model.module
                       if isinstance(self.model, nn.DataParallel)
                       else self.model)
@@ -114,8 +114,9 @@ class ModelSaver(ModelSaverBase):
             'optim': self.optim,
         }
 
-        logger.info("Saving checkpoint %s_step_%d.pt" % (self.base_path, step))
-        checkpoint_path = '%s_step_%d.pt' % (self.base_path, step)
+        checkpoint_path = '%s_step_%d_ppl_%.2f_acc_%.2f.pt' % \
+                          (self.base_path, step, ppl, acc)
+        logger.info("Saving checkpoint %s" % (checkpoint_path))
         torch.save(checkpoint, checkpoint_path)
         return checkpoint, checkpoint_path
 

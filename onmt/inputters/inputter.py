@@ -272,6 +272,8 @@ def _build_field_vocab(field, counter, **kwargs):
         tok for tok in [field.unk_token, field.pad_token, field.init_token,
                         field.eos_token]
         if tok is not None))
+
+    # alias of torchtext.vocab.Vocab
     field.vocab = field.vocab_cls(counter, specials=specials, **kwargs)
 
 
@@ -334,7 +336,8 @@ def build_vocab(train_dataset_files, fields, data_type, share_vocab,
                     continue
                 elif k == 'tgt' and tgt_vocab:
                     continue
-                counter[k].update(val)
+                counter[k].update(val)  # counter[src][w] += 1 for w in
+                        # val=[('Like', 'all', 'insurgencies', ',', ...)]
 
         # Drop the none-using from memory but keep the last
         if (index < len(train_dataset_files) - 1):
@@ -378,10 +381,14 @@ def build_vocab(train_dataset_files, fields, data_type, share_vocab,
             logger.info(" * merging src and tgt vocab...")
             merged_vocab = merge_vocabs(
                 [fields["src"].vocab, fields["tgt"].vocab],
-                vocab_size=src_vocab_size,
+                vocab_size=src_vocab_size,  # Arbitrary: vocab size max from src
                 min_frequency=src_words_min_frequency)
             fields["src"].vocab = merged_vocab
             fields["tgt"].vocab = merged_vocab
+            logger.info(" ** after merge (using (src) vocab size %d and "
+                        " min frequency %d), src/tgt share vocab size: %d." %
+                        (src_vocab_size, src_words_min_frequency,
+                         len(fields["src"].vocab)))
 
     return fields
 
@@ -419,12 +426,27 @@ class OrderedIterator(torchtext.data.Iterator):
         """ Create batches """
         if self.train:
             def _pool(data, random_shuffler):
+                # Break data into subsets with 100B examples each.
                 for p in torchtext.data.batch(data, self.batch_size * 100):
+                    # Break subset into (100) subsubsets with B examples each.
                     p_batch = torchtext.data.batch(
                         sorted(p, key=self.sort_key),
                         self.batch_size, self.batch_size_fn)
+
+                    #------------------------------------
+                    # p_batch yields a list of B examples.
+                    #-------------------------------------
                     for b in random_shuffler(list(p_batch)):
+                        #-----------------------------------------------------
+                        # When yielded, b becomes torchtext.data.batch.Batch:
+                        #
+                        #   [.src]:    ([torch.LongTensor of size T(src) x B],
+                        #               [torch.LongTensor of size B])
+                        #   [.tgt]:    [torch.LongTensor of size T(tgt) x B]
+	                #   [.indices]:[torch.LongTensor of size B]
+                        #-----------------------------------------------------
                         yield b
+
 
             self.batches = _pool(self.data(), self.random_shuffler)
         else:
@@ -457,14 +479,27 @@ class DatasetLazyIter(object):
         self.is_train = is_train
 
         self.cur_iter = self._next_dataset_iterator(datasets)
+        #-------------
+        #             = OrderedIterator(torch.load(data/train.0.pt),
+        #                               batch_size, ...)
+
         # We have at least one dataset.
         assert self.cur_iter is not None
 
     def __iter__(self):
         dataset_iter = (d for d in self.datasets)
         while self.cur_iter is not None:
-            for batch in self.cur_iter:
+            for batch in self.cur_iter:  # This calls create_batches in
+                                         # OrderedIterator.
+                # batch =
+                #
+                # torchtext.data.batch.Batch of size B
+                #   [.src]:    ([torch.LongTensor of size T(src) x B],
+                #               [torch.LongTensor of size B])
+                #   [.tgt]:    [torch.LongTensor of size T(tgt) x B]
+	        #   [.indices]:[torch.LongTensor of size B]
                 yield batch
+
             self.cur_iter = self._next_dataset_iterator(dataset_iter)
 
     def __len__(self):
@@ -475,6 +510,10 @@ class DatasetLazyIter(object):
         return len(self.cur_iter)
 
     def _next_dataset_iterator(self, dataset_iter):
+        #--------------------------------------------------------------
+        # self.datasets = for pt in pts:
+        #                    yield torch.load(data/train.i.pt)
+        #--------------------------------------------------------------
         try:
             # Drop the current dataset for decreasing memory
             if hasattr(self, "cur_dataset"):
@@ -484,6 +523,7 @@ class DatasetLazyIter(object):
                 gc.collect()
 
             self.cur_dataset = next(dataset_iter)
+
         except StopIteration:
             return None
 
@@ -528,8 +568,7 @@ def build_dataset_iter(datasets, fields, opt, is_train=True):
             tgt_elements = count * max_tgt_in_batch
             return max(src_elements, tgt_elements)
     else:
-        batch_size_fn = None
-
+        batch_size_fn = None  # batch_type: "sents"
     if opt.gpu_ranks:
         device = "cuda"
     else:

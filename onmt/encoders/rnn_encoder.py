@@ -54,13 +54,24 @@ class RNNEncoder(EncoderBase):
         "See :obj:`EncoderBase.forward()`"
         self._check_args(src, lengths)
 
+        # src is a (T x B x 1) batched index sequences of length T
+        #   src[:,0,:] = tensor([[13], [2199], [1801], ... [4]])
+
         emb = self.embeddings(src)
-        # s_len, batch, emb_dim = emb.size()
+
+        # emb is a (T x B x d) batched d-dim emb sequences of length T
 
         packed_emb = emb
         if lengths is not None and not self.no_pack_padded_seq:
             # Lengths data is wrapped inside a Tensor.
-            lengths_list = lengths.view(-1).tolist()
+            lengths_list = lengths.view(-1).tolist()  # [10, 10, ..., 9, 9, 9]
+
+            # PackedSequence (PS): given padded sequences (T x B x d) and their
+            #                      lengths, pack into a form amenable for RNN
+            #
+            #   pack([[1, 4, 6],  [3,2,1])    =>    PS(data=[1,4,6,2,5,3],
+            #         [2, 5, 0],                       batch_sizes=[3, 2, 1])
+            #         [3, 0, 0]],
             packed_emb = pack(emb, lengths_list)
 
         memory_bank, encoder_final = self.rnn(packed_emb)

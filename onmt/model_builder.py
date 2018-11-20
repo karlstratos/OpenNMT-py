@@ -39,7 +39,7 @@ def build_embeddings(opt, word_dict, feature_dicts, for_encoder=True):
     else:
         embedding_dim = opt.tgt_word_vec_size
 
-    word_padding_idx = word_dict.stoi[inputters.PAD_WORD]
+    word_padding_idx = word_dict.stoi[inputters.PAD_WORD]  # PAD_WORD = <blank>
     num_word_embeddings = len(word_dict)
 
     feats_padding_idx = [feat_dict.stoi[inputters.PAD_WORD]
@@ -79,6 +79,10 @@ def build_encoder(opt, embeddings):
         return MeanEncoder(opt.enc_layers, embeddings)
     else:
         # "rnn" or "brnn"
+        logger.info('RNNEncoder: type %s, bidir %d, layers %d, '
+                    'hidden size %d, dropout %.2f' %
+                    (opt.rnn_type, opt.brnn, opt.enc_layers,
+                     opt.enc_rnn_size, opt.dropout))
         return RNNEncoder(opt.rnn_type, opt.brnn, opt.enc_layers,
                           opt.enc_rnn_size, opt.dropout, embeddings,
                           opt.bridge)
@@ -103,6 +107,13 @@ def build_decoder(opt, embeddings):
                           opt.cnn_kernel_width, opt.dropout,
                           embeddings)
     elif opt.input_feed:
+        logger.info('InputFeedRNNDecoder: type %s, bidir %d, layers %d, '
+                    'hidden size %d, %s global attn (%s), '
+                    'coverage attn %d, copy attn %d, dropout %.2f' %
+                    (opt.rnn_type, opt.brnn, opt.dec_layers,
+                     opt.dec_rnn_size, opt.global_attention,
+                     opt.global_attention_function, opt.coverage_attn,
+                     opt.copy_attn, opt.dropout))
         return InputFeedRNNDecoder(opt.rnn_type, opt.brnn,
                                    opt.dec_layers, opt.dec_rnn_size,
                                    opt.global_attention,
@@ -169,6 +180,7 @@ def build_base_model(model_opt, fields, gpu, checkpoint=None):
                                      decoder rnn sizes for translation now.""")
 
     # Build encoder.
+    logger.info('Building encoder......')
     if model_opt.model_type == "text":
         src_dict = fields["src"].vocab
         feature_dicts = inputters.collect_feature_vocabs(fields, 'src')
@@ -198,6 +210,7 @@ def build_base_model(model_opt, fields, gpu, checkpoint=None):
                                model_opt.window_size)
 
     # Build decoder.
+    logger.info('Building decoder......')
     tgt_dict = fields["tgt"].vocab
     feature_dicts = inputters.collect_feature_vocabs(fields, 'tgt')
     tgt_embeddings = build_embeddings(model_opt, tgt_dict,
@@ -210,15 +223,30 @@ def build_base_model(model_opt, fields, gpu, checkpoint=None):
             raise AssertionError('The `-share_vocab` should be set during '
                                  'preprocess if you use share_embeddings!')
 
+        logger.info('** Sharing word embedding matrix between src/tgt')
         tgt_embeddings.word_lut.weight = src_embeddings.word_lut.weight
+    elif src_dict == tgt_dict:
+        logger.info('WARNING: NOT SHARING WORD EMBEDDINGS FOR TIED VOCAB???')
+        exit(0)
 
     decoder = build_decoder(model_opt, tgt_embeddings)
 
     # Build NMTModel(= encoder + decoder).
+    logger.info('Building NMTModel......')
     device = torch.device("cuda" if gpu else "cpu")
     model = onmt.models.NMTModel(encoder, decoder)
 
     # Build Generator.
+    logger.info('Building generator......')
+
+    # (standard generator)
+    #
+    # Given final hidden state (after attention) at t-th decoding step, return
+    #
+    #     s_t = log(softmax(W h_t + b))
+    #
+    # where W is optionally tied to the decoder word embedding matrix.
+
     if not model_opt.copy_attn:
         if model_opt.generator_function == "sparsemax":
             gen_func = onmt.modules.sparse_activations.LogSparsemax(dim=-1)
@@ -229,16 +257,25 @@ def build_base_model(model_opt, fields, gpu, checkpoint=None):
             gen_func
         )
         if model_opt.share_decoder_embeddings:
+            logger.info('** Sharing generator softmax with tgt word embedding')
             generator[0].weight = decoder.embeddings.word_lut.weight
+        else:
+            logger.info('WARNING: NOT SHARING GENERATOR SOFTMAX WITH TGT WORD '
+                        'EMBEDDING MATRIX - IS THERE A GOOD REASON?')
     else:
         generator = CopyGenerator(model_opt.dec_rnn_size,
                                   fields["tgt"].vocab)
 
     # Load the model states from checkpoint or initialize them.
     if checkpoint is not None:
+        logger.info('Loade model states from checkpoint......')
         model.load_state_dict(checkpoint['model'], strict=False)
         generator.load_state_dict(checkpoint['generator'], strict=False)
     else:
+        logger.info('Initializing parameters......')
+        if not model_opt.param_init_glorot:
+            logger.info('WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST '
+                        'USE UNIF(+- %.2f)' % (model_opt.param_init))
         if model_opt.param_init != 0.0:
             for p in model.parameters():
                 p.data.uniform_(-model_opt.param_init, model_opt.param_init)
@@ -253,9 +290,13 @@ def build_base_model(model_opt, fields, gpu, checkpoint=None):
                     xavier_uniform_(p)
 
         if hasattr(model.encoder, 'embeddings'):
+            if model_opt.pre_word_vecs_enc:
+                logger.info('** Using pretrained encoder word embeddings')
             model.encoder.embeddings.load_pretrained_vectors(
                 model_opt.pre_word_vecs_enc, model_opt.fix_word_vecs_enc)
         if hasattr(model.decoder, 'embeddings'):
+            if model_opt.pre_word_vecs_dec:
+                logger.info('** Using pretrained decoder word embeddings')
             model.decoder.embeddings.load_pretrained_vectors(
                 model_opt.pre_word_vecs_dec, model_opt.fix_word_vecs_dec)
 

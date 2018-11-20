@@ -477,6 +477,10 @@ def translate_opts(parser):
                        help="""Report rouge 1/2/3/L/SU4 score after translation
                        call tools/test_rouge.py on command line""")
 
+    # Options relevant to language modeling.
+    group.add_argument('-ppl', action='store_true',
+                       help="Compute conditional perplexity of target and quit")
+
     # Options most relevant to summarization.
     group.add_argument('-dynamic_dict', action='store_true',
                        help="Create dynamic dictionaries")

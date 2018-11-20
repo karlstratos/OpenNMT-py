@@ -6,7 +6,8 @@ multi-bleu.perl
 .idea
 *.sublime-*
 .DS_Store
-data/
+data/*
+!data/ptb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

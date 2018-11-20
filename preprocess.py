@@ -124,6 +124,9 @@ def build_save_in_shards_using_shards_size(src_corpus, tgt_corpus, fields,
 
         logger.info(" * saving %sth %s data shard to %s."
                     % (index, corpus_type, pt_file))
+        logger.info(" ** after filtering, %d examples remain out of %d" %
+                    (len(dataset.examples),
+                     dataset.num_examples_before_filtering))
         torch.save(dataset, pt_file)
 
         ret_list.append(pt_file)

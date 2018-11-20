@@ -9,6 +9,7 @@ import math
 import torch
 
 from itertools import count
+from onmt.utils.loss import NMTLossCompute
 from onmt.utils.misc import tile
 
 import onmt.model_builder
@@ -144,6 +145,71 @@ class Translator(object):
                 "scores": [],
                 "log_probs": []}
 
+    def report_ppl(self, src_path, tgt_path, batch_size):
+        """
+        Report conditional perplexity of target given source.
+
+        Args:
+            src_path (str): filepath of source data
+            tgt_path (str): filepath of target data
+            batch_size (int): size of examples per mini-batch
+        """
+        assert not (src_path is None or tgt_path is None or batch_size is None)
+
+        data = inputters. \
+            build_dataset(self.fields,
+                          self.data_type,
+                          src_path=src_path,
+                          tgt_path=tgt_path,
+                          sample_rate=self.sample_rate,
+                          window_size=self.window_size,
+                          window_stride=self.window_stride,
+                          window=self.window,
+                          use_filter_pred=self.use_filter_pred,
+                          image_channel_size=self.image_channel_size)
+
+        if self.cuda:
+            cur_device = "cuda"
+        else:
+            cur_device = "cpu"
+
+        data_iter = inputters.OrderedIterator(
+            dataset=data, device=cur_device,
+            batch_size=batch_size, train=False, sort=False,
+            sort_within_batch=True, shuffle=False)
+        #-----------------------------------------------------------------------
+        # Copy-and-paste from validate() in trainer.
+        self.model.eval()
+
+        stats = onmt.utils.Statistics()
+
+        loss = NMTLossCompute(self.model.generator, self.fields["tgt"].vocab)
+        loss.to(cur_device)
+
+        for batch in data_iter:
+            src = inputters.make_features(batch, 'src', self.data_type)
+            if self.data_type == 'text':
+                _, src_lengths = batch.src
+            elif self.data_type == 'audio':
+                src_lengths = batch.src_lengths
+            else:
+                src_lengths = None
+
+            tgt = inputters.make_features(batch, 'tgt')
+
+            # F-prop through the model.
+            outputs, attns = self.model(src, tgt, src_lengths)
+
+            # Compute loss.
+            batch_stats = loss.monolithic_compute_loss(batch, outputs, attns)
+
+            # Update statistics.
+            stats.update(batch_stats)
+
+        print('ppl:     %g' % stats.ppl())
+        print('acc:     %g' % stats.accuracy())
+        #---------------------------------------
+
     def translate(self,
                   src_path=None,
                   src_data_iter=None,
@@ -219,6 +285,53 @@ class Translator(object):
         all_predictions = []
 
         for batch in data_iter:
+            #-------------------------------------------------------------------
+            # batch.src (T_max x B, B x 1): src sents/lengths
+            #
+            #([[ 347,    0,    0,    0],
+            #  [   7,    0,    0,    0],
+            #  [   8,    0,   20,   20],         Example with T_max = 18
+            #  [  50,   20,    0,    0],                          B = 4
+            #  [   0,    0,    0,    0],
+            #  [   7,    0,   22,  320],
+            #  [   0,    0,    0, 3762],
+            #  [  71,  622,   11,    0],
+            #  [   0,   11,    0,  167],
+            #  [  46, 1195,    0,    1],
+            #  [ 553, 1364,    4,    1],           (0 is probably <unk>)
+            #  [  20,    0,    1,    1],
+            #  [   0, 1394,    1,    1],           (1 is probably <blank>)
+            #  [ 320,    4,    1,    1],
+            #  [3762,    1,    1,    1],           (4 is probably .)
+            #  [   0,    1,    1,    1],
+            #  [ 167,    1,    1,    1],
+            #  [   4,    1,    1,    1]], [18, 14, 11,  9])
+            #
+            # batch.tgt (T'_max x B): tgt sents, if provided
+            #
+            # [[   2,    2,    2,    2],
+            #  [ 347,    0,    0,    0],
+            #  [   7,    0,    0,    0],         Example with T'_max = 20
+            #  [   8,    0,   20,   20],
+            #  [  50,   20,    0,    0],
+            #  [   0,    0,    0,    0],
+            #  [   7,    0,   22,  320],
+            #  [   0,    0,    0, 3762],         (2 is probably <bos>)
+            #  [  71,  622,   11,    0],
+            #  [   0,   11,    0,  167],         (3 is probably <eos>)
+            #  [  46, 1195,    0,    3],
+            #  [ 553, 1364,    4,    1],
+            #  [  20,    0,    3,    1],
+            #  [   0, 1394,    1,    1],
+            #  [ 320,    4,    1,    1],
+            #  [3762,    3,    1,    1],
+            #  [   0,    1,    1,    1],
+            #  [ 167,    1,    1,    1],
+            #  [   4,    1,    1,    1],
+            #  [   3,    1,    1,    1]]
+            #
+            # batch.indices (B x 1): example indices
+            #-------------------------------------------------------------------
             batch_data = self.translate_batch(batch, data, fast=self.fast)
             translations = builder.from_batch(batch_data)
 
@@ -322,16 +435,18 @@ class Translator(object):
                     min_length=self.min_length,
                     n_best=self.n_best,
                     return_attention=self.replace_unk)
-            else:
+            else:  # default
                 return self._translate_batch(batch, data)
 
     def _run_encoder(self, batch, data_type):
+        # This just gets batch.src[0] (T_max x B x 1)
         src = inputters.make_features(batch, 'src', data_type)
         src_lengths = None
         if data_type == 'text':
             _, src_lengths = batch.src
         elif data_type == 'audio':
             src_lengths = batch.src_lengths
+
         enc_states, memory_bank, src_lengths = self.model.encoder(
             src, src_lengths)
         if src_lengths is None:
@@ -342,6 +457,227 @@ class Translator(object):
                                .long() \
                                .fill_(memory_bank.size(0))
         return src, enc_states, memory_bank, src_lengths
+
+    def _translate_batch(self, batch, data):
+        # (0) Prep each of the components of the search.
+        # And helper method for reducing verbosity.
+        beam_size = self.beam_size
+        batch_size = batch.batch_size
+        data_type = data.data_type
+        vocab = self.fields["tgt"].vocab
+
+        # Define a list of tokens to exclude from ngram-blocking
+        # exclusion_list = ["<t>", "</t>", "."]
+        exclusion_tokens = set([vocab.stoi[t]
+                                for t in self.ignore_when_blocking])
+
+        beam = [onmt.translate.Beam(beam_size, n_best=self.n_best,
+                                    cuda=self.cuda,
+                                    global_scorer=self.global_scorer,
+                                    pad=vocab.stoi[inputters.PAD_WORD],
+                                    eos=vocab.stoi[inputters.EOS_WORD],
+                                    bos=vocab.stoi[inputters.BOS_WORD],
+                                    min_length=self.min_length,
+                                    stepwise_penalty=self.stepwise_penalty,
+                                    block_ngram_repeat=self.block_ngram_repeat,
+                                    exclusion_tokens=exclusion_tokens)
+                for __ in range(batch_size)]
+
+        # Help functions for working with beams and batches
+        def var(a):
+            return torch.tensor(a, requires_grad=False)
+
+        def rvar(a):
+            return var(a.repeat(1, beam_size, 1))
+
+        def bottle(m):
+            return m.view(batch_size * beam_size, -1)
+
+        def unbottle(m):
+            return m.view(beam_size, batch_size, -1)
+
+        def _repeat_beam_size_times(x, dim):
+            repeats = [1] * x.dim()
+            repeats[dim] = beam_size
+            return x.repeat(*repeats)
+
+        # (1) Run the encoder on the src.
+        src, enc_states, memory_bank, src_lengths = self._run_encoder(
+            batch, data_type)
+
+        # src:               T_max  x B x 1
+        # memory_bank:       T_max  x B x d
+        # enc_states[i]:     layers x B x d
+        self.model.decoder.init_state(src, memory_bank, enc_states)
+
+        # (2) Repeat src objects `beam_size` times.
+        src_map = rvar(batch.src_map.data) \
+            if data_type == 'text' and self.copy_attn else None
+        if isinstance(memory_bank, tuple):
+            memory_bank = tuple(rvar(x.data) for x in memory_bank)
+        else:
+            memory_bank = rvar(memory_bank.data)
+        memory_lengths = src_lengths.repeat(beam_size)
+        self.model.decoder.map_state(_repeat_beam_size_times)
+
+        # (3) run the decoder to generate sentences, using beam search.
+        for i in range(self.max_length):
+            if all((b.done() for b in beam)):
+                break
+
+            # Construct batch x beam_size nxt words.
+            # Get all the pending current beam words and arrange for forward.
+            inp = var(torch.stack([b.get_current_state() for b in beam])
+                      .t().contiguous().view(1, -1))
+
+            # Turn any copied words to UNKs
+            # 0 is unk
+            if self.copy_attn:
+                inp = inp.masked_fill(
+                    inp.gt(len(self.fields["tgt"].vocab) - 1), 0)
+
+            # Temporary kludge solution to handle changed dim expectation
+            # in the decoder
+            inp = inp.unsqueeze(2)
+
+            # Run one step.
+            dec_out, attn = self.model.decoder(inp, memory_bank,
+                                               memory_lengths=memory_lengths,
+                                               step=i)
+
+            dec_out = dec_out.squeeze(0)
+
+            # dec_out: beam x rnn_size
+
+            # (b) Compute a vector of batch x beam word scores.
+            if not self.copy_attn:
+                out = self.model.generator.forward(dec_out).data
+                out = unbottle(out)
+                # beam x tgt_vocab
+                beam_attn = unbottle(attn["std"])
+            else:
+                out = self.model.generator.forward(dec_out,
+                                                   attn["copy"].squeeze(0),
+                                                   src_map)
+                # beam x (tgt_vocab + extra_vocab)
+                out = data.collapse_copy_scores(
+                    unbottle(out.data),
+                    batch, self.fields["tgt"].vocab, data.src_vocabs)
+                # beam x tgt_vocab
+                out = out.log()
+                beam_attn = unbottle(attn["copy"])
+
+            # (c) Advance each beam.
+            select_indices_array = []
+            for j, b in enumerate(beam):
+                b.advance(out[:, j],
+                          beam_attn.data[:, j, :memory_lengths[j]])
+                select_indices_array.append(
+                    b.get_current_origin() * batch_size + j)
+            select_indices = torch.cat(select_indices_array) \
+                                  .view(batch_size, beam_size) \
+                                  .transpose(0, 1) \
+                                  .contiguous() \
+                                  .view(-1)
+            self.model.decoder.map_state(
+                lambda state, dim: state.index_select(dim, select_indices))
+
+        # (4) Extract sentences from beam.
+        ret = self._from_beam(beam)
+        ret["gold_score"] = [0] * batch_size
+        if "tgt" in batch.__dict__:
+            ret["gold_score"] = self._run_target(batch, data)
+        ret["batch"] = batch
+
+        return ret
+
+    def _from_beam(self, beam):
+        ret = {"predictions": [],
+               "scores": [],
+               "attention": []}
+        for b in beam:
+            n_best = self.n_best
+            scores, ks = b.sort_finished(minimum=n_best)
+            hyps, attn = [], []
+            for i, (times, k) in enumerate(ks[:n_best]):
+                hyp, att = b.get_hyp(times, k)
+                hyps.append(hyp)
+                attn.append(att)
+            ret["predictions"].append(hyps)
+            ret["scores"].append(scores)
+            ret["attention"].append(attn)
+        return ret
+
+    def _run_target(self, batch, data):
+        data_type = data.data_type
+        if data_type == 'text':
+            _, src_lengths = batch.src
+        elif data_type == 'audio':
+            src_lengths = batch.src_lengths
+        else:
+            src_lengths = None
+        src = inputters.make_features(batch, 'src', data_type)
+
+        #  (1) run the encoder on the src
+        enc_states, memory_bank, src_lengths \
+            = self.model.encoder(src, src_lengths)
+        self.model.decoder.init_state(src, memory_bank, enc_states)
+
+        #  (2) if a target is specified, compute the 'goldScore'
+        #  (i.e. log likelihood) of the target under the model
+        return self._score_target(batch, memory_bank, src_lengths)
+
+    def _score_target(self, batch, memory_bank, src_lengths):
+        tgt_in = inputters.make_features(batch, 'tgt')[:-1]
+        tt = torch.cuda if self.cuda else torch
+        gold_scores = tt.FloatTensor(batch.batch_size).fill_(0)
+        dec_out, _ = self.model.decoder(
+            tgt_in, memory_bank, memory_lengths=src_lengths)
+
+        tgt_pad = self.fields["tgt"].vocab.stoi[inputters.PAD_WORD]
+        for dec, tgt in zip(dec_out, batch.tgt[1:].data):
+            # Log prob of each word.
+            out = self.model.generator.forward(dec)
+            tgt = tgt.unsqueeze(1)
+            scores = out.data.gather(1, tgt)
+            scores.masked_fill_(tgt.eq(tgt_pad), 0)
+            gold_scores += scores.view(-1)
+        return gold_scores
+
+    def _report_score(self, name, score_total, words_total):
+        if words_total == 0:
+            msg = "%s No words predicted" % (name,)
+        else:
+            msg = ("%s AVG SCORE: %.4f, %s PPL: %.4f" % (
+                name, score_total / words_total,
+                name, math.exp(-score_total / words_total)))
+        return msg
+
+    def _report_bleu(self, tgt_path):
+        import subprocess
+        base_dir = os.path.abspath(__file__ + "/../../..")
+        # Rollback pointer to the beginning.
+        self.out_file.seek(0)
+        print()
+
+        res = subprocess.check_output("perl %s/tools/multi-bleu.perl %s"
+                                      % (base_dir, tgt_path),
+                                      stdin=self.out_file,
+                                      shell=True).decode("utf-8")
+
+        msg = ">> " + res.strip()
+        return msg
+
+    def _report_rouge(self, tgt_path):
+        import subprocess
+        path = os.path.split(os.path.realpath(__file__))[0]
+        res = subprocess.check_output(
+            "python %s/tools/test_rouge.py -r %s -c STDIN"
+            % (path, tgt_path),
+            shell=True,
+            stdin=self.out_file).decode("utf-8")
+        msg = res.strip()
+        return msg
 
     def _fast_translate_batch(self,
                               batch,
@@ -566,220 +902,3 @@ class Translator(object):
                 src_map = src_map.index_select(1, select_indices)
 
         return results
-
-    def _translate_batch(self, batch, data):
-        # (0) Prep each of the components of the search.
-        # And helper method for reducing verbosity.
-        beam_size = self.beam_size
-        batch_size = batch.batch_size
-        data_type = data.data_type
-        vocab = self.fields["tgt"].vocab
-
-        # Define a list of tokens to exclude from ngram-blocking
-        # exclusion_list = ["<t>", "</t>", "."]
-        exclusion_tokens = set([vocab.stoi[t]
-                                for t in self.ignore_when_blocking])
-
-        beam = [onmt.translate.Beam(beam_size, n_best=self.n_best,
-                                    cuda=self.cuda,
-                                    global_scorer=self.global_scorer,
-                                    pad=vocab.stoi[inputters.PAD_WORD],
-                                    eos=vocab.stoi[inputters.EOS_WORD],
-                                    bos=vocab.stoi[inputters.BOS_WORD],
-                                    min_length=self.min_length,
-                                    stepwise_penalty=self.stepwise_penalty,
-                                    block_ngram_repeat=self.block_ngram_repeat,
-                                    exclusion_tokens=exclusion_tokens)
-                for __ in range(batch_size)]
-
-        # Help functions for working with beams and batches
-        def var(a):
-            return torch.tensor(a, requires_grad=False)
-
-        def rvar(a):
-            return var(a.repeat(1, beam_size, 1))
-
-        def bottle(m):
-            return m.view(batch_size * beam_size, -1)
-
-        def unbottle(m):
-            return m.view(beam_size, batch_size, -1)
-
-        def _repeat_beam_size_times(x, dim):
-            repeats = [1] * x.dim()
-            repeats[dim] = beam_size
-            return x.repeat(*repeats)
-
-        # (1) Run the encoder on the src.
-        src, enc_states, memory_bank, src_lengths = self._run_encoder(
-            batch, data_type)
-        self.model.decoder.init_state(src, memory_bank, enc_states)
-
-        # (2) Repeat src objects `beam_size` times.
-        src_map = rvar(batch.src_map.data) \
-            if data_type == 'text' and self.copy_attn else None
-        if isinstance(memory_bank, tuple):
-            memory_bank = tuple(rvar(x.data) for x in memory_bank)
-        else:
-            memory_bank = rvar(memory_bank.data)
-        memory_lengths = src_lengths.repeat(beam_size)
-        self.model.decoder.map_state(_repeat_beam_size_times)
-
-        # (3) run the decoder to generate sentences, using beam search.
-        for i in range(self.max_length):
-            if all((b.done() for b in beam)):
-                break
-
-            # Construct batch x beam_size nxt words.
-            # Get all the pending current beam words and arrange for forward.
-            inp = var(torch.stack([b.get_current_state() for b in beam])
-                      .t().contiguous().view(1, -1))
-
-            # Turn any copied words to UNKs
-            # 0 is unk
-            if self.copy_attn:
-                inp = inp.masked_fill(
-                    inp.gt(len(self.fields["tgt"].vocab) - 1), 0)
-
-            # Temporary kludge solution to handle changed dim expectation
-            # in the decoder
-            inp = inp.unsqueeze(2)
-
-            # Run one step.
-            dec_out, attn = self.model.decoder(inp, memory_bank,
-                                               memory_lengths=memory_lengths,
-                                               step=i)
-
-            dec_out = dec_out.squeeze(0)
-
-            # dec_out: beam x rnn_size
-
-            # (b) Compute a vector of batch x beam word scores.
-            if not self.copy_attn:
-                out = self.model.generator.forward(dec_out).data
-                out = unbottle(out)
-                # beam x tgt_vocab
-                beam_attn = unbottle(attn["std"])
-            else:
-                out = self.model.generator.forward(dec_out,
-                                                   attn["copy"].squeeze(0),
-                                                   src_map)
-                # beam x (tgt_vocab + extra_vocab)
-                out = data.collapse_copy_scores(
-                    unbottle(out.data),
-                    batch, self.fields["tgt"].vocab, data.src_vocabs)
-                # beam x tgt_vocab
-                out = out.log()
-                beam_attn = unbottle(attn["copy"])
-
-            # (c) Advance each beam.
-            select_indices_array = []
-            for j, b in enumerate(beam):
-                b.advance(out[:, j],
-                          beam_attn.data[:, j, :memory_lengths[j]])
-                select_indices_array.append(
-                    b.get_current_origin() * batch_size + j)
-            select_indices = torch.cat(select_indices_array) \
-                                  .view(batch_size, beam_size) \
-                                  .transpose(0, 1) \
-                                  .contiguous() \
-                                  .view(-1)
-            self.model.decoder.map_state(
-                lambda state, dim: state.index_select(dim, select_indices))
-
-        # (4) Extract sentences from beam.
-        ret = self._from_beam(beam)
-        ret["gold_score"] = [0] * batch_size
-        if "tgt" in batch.__dict__:
-            ret["gold_score"] = self._run_target(batch, data)
-        ret["batch"] = batch
-
-        return ret
-
-    def _from_beam(self, beam):
-        ret = {"predictions": [],
-               "scores": [],
-               "attention": []}
-        for b in beam:
-            n_best = self.n_best
-            scores, ks = b.sort_finished(minimum=n_best)
-            hyps, attn = [], []
-            for i, (times, k) in enumerate(ks[:n_best]):
-                hyp, att = b.get_hyp(times, k)
-                hyps.append(hyp)
-                attn.append(att)
-            ret["predictions"].append(hyps)
-            ret["scores"].append(scores)
-            ret["attention"].append(attn)
-        return ret
-
-    def _run_target(self, batch, data):
-        data_type = data.data_type
-        if data_type == 'text':
-            _, src_lengths = batch.src
-        elif data_type == 'audio':
-            src_lengths = batch.src_lengths
-        else:
-            src_lengths = None
-        src = inputters.make_features(batch, 'src', data_type)
-
-        #  (1) run the encoder on the src
-        enc_states, memory_bank, src_lengths \
-            = self.model.encoder(src, src_lengths)
-        self.model.decoder.init_state(src, memory_bank, enc_states)
-
-        #  (2) if a target is specified, compute the 'goldScore'
-        #  (i.e. log likelihood) of the target under the model
-        return self._score_target(batch, memory_bank, src_lengths)
-
-    def _score_target(self, batch, memory_bank, src_lengths):
-        tgt_in = inputters.make_features(batch, 'tgt')[:-1]
-        tt = torch.cuda if self.cuda else torch
-        gold_scores = tt.FloatTensor(batch.batch_size).fill_(0)
-        dec_out, _ = self.model.decoder(
-            tgt_in, memory_bank, memory_lengths=src_lengths)
-
-        tgt_pad = self.fields["tgt"].vocab.stoi[inputters.PAD_WORD]
-        for dec, tgt in zip(dec_out, batch.tgt[1:].data):
-            # Log prob of each word.
-            out = self.model.generator.forward(dec)
-            tgt = tgt.unsqueeze(1)
-            scores = out.data.gather(1, tgt)
-            scores.masked_fill_(tgt.eq(tgt_pad), 0)
-            gold_scores += scores.view(-1)
-        return gold_scores
-
-    def _report_score(self, name, score_total, words_total):
-        if words_total == 0:
-            msg = "%s No words predicted" % (name,)
-        else:
-            msg = ("%s AVG SCORE: %.4f, %s PPL: %.4f" % (
-                name, score_total / words_total,
-                name, math.exp(-score_total / words_total)))
-        return msg
-
-    def _report_bleu(self, tgt_path):
-        import subprocess
-        base_dir = os.path.abspath(__file__ + "/../../..")
-        # Rollback pointer to the beginning.
-        self.out_file.seek(0)
-        print()
-
-        res = subprocess.check_output("perl %s/tools/multi-bleu.perl %s"
-                                      % (base_dir, tgt_path),
-                                      stdin=self.out_file,
-                                      shell=True).decode("utf-8")
-
-        msg = ">> " + res.strip()
-        return msg
-
-    def _report_rouge(self, tgt_path):
-        import subprocess
-        path = os.path.split(os.path.realpath(__file__))[0]
-        res = subprocess.check_output(
-            "python %s/tools/test_rouge.py -r %s -c STDIN"
-            % (path, tgt_path),
-            shell=True,
-            stdin=self.out_file).decode("utf-8")
-        msg = res.strip()
-        return msg

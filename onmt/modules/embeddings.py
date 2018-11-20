@@ -88,7 +88,7 @@ class Embeddings(nn.Module):
 
     def __init__(self, word_vec_size,
                  word_vocab_size,
-                 word_padding_idx,
+                 word_padding_idx,  # <blank>
                  position_encoding=False,
                  feat_merge="concat",
                  feat_vec_exponent=0.7, feat_vec_size=-1,
@@ -159,7 +159,8 @@ class Embeddings(nn.Module):
     @property
     def word_lut(self):
         """ word look-up table """
-        return self.make_embedding[0][0]
+        return self.make_embedding[0][0]  # embeddings.word_lut.weight returns
+                                          # the word embedding matrix
 
     @property
     def emb_luts(self):

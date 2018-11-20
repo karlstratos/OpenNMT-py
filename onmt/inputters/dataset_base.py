@@ -8,7 +8,7 @@ import torchtext
 import onmt
 
 PAD_WORD = '<blank>'
-UNK_WORD = '<unk>'
+UNK_WORD = '<unk2>'  # conflicts with preprocessed PTB
 UNK = 0
 BOS_WORD = '<s>'
 EOS_WORD = '</s>'

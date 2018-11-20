@@ -122,14 +122,37 @@ def main(opt, device_id):
     _check_save_model_path(opt)
 
     # Build optimizer.
+    if opt.train_from and opt.reset_optim != 'all':
+        logger.info('* checkpoint training not considered by me yet')
+    else:
+        # warmup_steps and rnn_size are parameters for Noam decay (transformer):
+        #    https://arxiv.org/pdf/1706.03762.pdf (Section 3)
+        decay_method = opt.decay_method if opt.decay_method else "standard"
+        logger.info('* Opt: %s (rate %.5f, maxgnorm %.1f, %s decay, '
+                    'decay_rate %.1f, start_decay_at %d, decay_every %d, '
+                    'ab1 %.5f, ab2 %.5f, adagradaccum %.1f, '
+                    'warmupsteps %d, hiddensize %d)' %
+                    (opt.optim, opt.learning_rate, opt.max_grad_norm,
+                     decay_method, opt.learning_rate_decay,
+                     opt.start_decay_steps, opt.decay_steps, opt.adam_beta1,
+                     opt.adam_beta2, opt.adagrad_accumulator_init,
+                     opt.warmup_steps, opt.rnn_size))
+
     optim = build_optim(model, opt, checkpoint)
 
-    # Build model saver
+    # Build model saver                               v
     model_saver = build_model_saver(model_opt, opt, model, fields, optim)
+
+    logger.info('* model_saver built, using it to build trainer with ')
 
     trainer = build_trainer(opt, device_id, model, fields,
                             optim, data_type, model_saver=model_saver)
 
+    #---------------------------------------------------------------------------
+    # 1. lazily_load_dataset = for pt in pts: yield torch.load(pt)
+    # 2. build_dataset_iter  = return DatasetLazyIter (train_iter_fct)
+    # 3. train_iter_fct()    = iterator over torchtext.data.batch.Batches
+    #---------------------------------------------------------------------------
     def train_iter_fct(): return build_dataset_iter(
         lazily_load_dataset("train", opt), fields, opt)
 
