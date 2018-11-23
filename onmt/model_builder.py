@@ -95,7 +95,17 @@ def build_decoder(opt, embeddings):
         opt: the option in current environment.
         embeddings (Embeddings): vocab embeddings for this decoder.
     """
+
     if opt.decoder_type == "transformer":
+        logger.info('TransformerDecoder: layers %d, input dim %d, '
+                    'fat relu hidden dim %d, num heads %d, %s global attn, '
+                    'copy attn %d, self attn type %s, dropout %.2f' %
+                    (opt.dec_layers, opt.dec_rnn_size, opt.transformer_ff,
+                     opt.heads, opt.global_attention, opt.copy_attn,
+                     opt.self_attn_type, opt.dropout))
+
+        # dec_rnn_size   = dimension of keys/values/queries (input to FF)
+        # transformer_ff = dimension of fat relu
         return TransformerDecoder(opt.dec_layers, opt.dec_rnn_size,
                                   opt.heads, opt.transformer_ff,
                                   opt.global_attention, opt.copy_attn,
@@ -125,6 +135,13 @@ def build_decoder(opt, embeddings):
                                    embeddings,
                                    opt.reuse_copy_attn)
     else:
+        logger.info('StdRNNDecoder: type %s, bidir %d, layers %d, '
+                    'hidden size %d, %s global attn (%s), '
+                    'coverage attn %d, copy attn %d, dropout %.2f' %
+                    (opt.rnn_type, opt.brnn, opt.dec_layers,
+                     opt.dec_rnn_size, opt.global_attention,
+                     opt.global_attention_function, opt.coverage_attn,
+                     opt.copy_attn, opt.dropout))
         return StdRNNDecoder(opt.rnn_type, opt.brnn,
                              opt.dec_layers, opt.dec_rnn_size,
                              opt.global_attention,
