@@ -26,6 +26,7 @@ python train.py -data data/ptb -save_model models/ptb -share_decoder_embeddings 
 
 
 # PTB: Transformer
+<<<<<<< HEAD
 python train.py -data data/ptb -save_model models/ptb_transformer -layers 6 -rnn_size 512 -word_vec_size 512 -transformer_ff 2048 -heads 8 -encoder_type transformer -decoder_type transformer -position_encoding -train_steps 200000 -max_generator_batches 2 -dropout 0.1 -batch_size 4096 -batch_type tokens -normalization tokens -accum_count 2 -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 -max_grad_norm 0 -param_init 0  -param_init_glorot -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -gpu_ranks 0 -truncated_decoder 35 -share_embeddings -share_decoder_embeddings -log logs/log_ptb_6tansformer_512in_2048fat_8heads.txt
 
 
@@ -54,3 +55,6 @@ python translate.py -model models/wdw_small_maxlen100_vocab10k_null2question_1_s
 ppl:     39.5675
 sxt:     354.133
 acc:     29.7021
+=======
+python train.py -data data/ptb -save_model models/ptb_transformer -layers 6 -rnn_size 512 -word_vec_size 512 -transformer_ff 2048 -heads 8 -encoder_type transformer -decoder_type transformer -position_encoding -train_steps 200000 -max_generator_batches 2 -dropout 0.1 -batch_size 4096 -batch_type tokens -normalization tokens -accum_count 1 -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 -max_grad_norm 0 -param_init 0  -param_init_glorot -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -gpu_ranks 0 -truncated_decoder 35 -share_decoder_embeddings -log logs/log_ptb_6tansformer_512in_2048fat_8heads.txt
+>>>>>>> 9ec8b98c66f8013b4fbab82ea3dff0e1ddf4e9b8
