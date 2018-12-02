@@ -1,0 +1,133 @@
+[2018-11-29 15:28:53,984 INFO] Loading train dataset from data/wdw100k_context2question.train.0.pt, number of examples: 127786
+[2018-11-29 15:28:54,137 INFO]  * vocabulary size. source = 98448; target = 99377
+[2018-11-29 15:28:54,137 INFO] Building model...
+[2018-11-29 15:28:54,137 INFO] Building encoder......
+[2018-11-29 15:28:55,553 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-11-29 15:28:55,870 INFO] Building decoder......
+[2018-11-29 15:45:40,667 INFO] Loading train dataset from data/wdw100k_context2question.train.0.pt, number of examples: 127786
+[2018-11-29 15:45:40,801 INFO]  * vocabulary size. source = 100005; target = 100005
+[2018-11-29 15:45:40,802 INFO] Building model...
+[2018-11-29 15:45:40,802 INFO] Building encoder......
+[2018-11-29 15:45:42,380 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-11-29 15:45:42,696 INFO] Building decoder......
+[2018-11-29 15:45:44,144 INFO] ** Sharing word embedding matrix between src/tgt
+[2018-11-29 15:45:44,145 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-11-29 15:45:44,625 INFO] Building NMTModel......
+[2018-11-29 15:45:44,626 INFO] Building generator......
+[2018-11-29 15:45:45,931 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-11-29 15:45:45,933 INFO] Initializing parameters......
+[2018-11-29 15:45:45,933 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-11-29 15:45:54,192 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(100005, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(100005, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=100005, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-11-29 15:45:54,194 INFO] encoder: 186031500
+[2018-11-29 15:45:54,194 INFO] decoder: 51874005
+[2018-11-29 15:45:54,194 INFO] * number of parameters: 237905505
+[2018-11-29 15:45:54,194 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-11-29 15:45:54,194 INFO] * model_saver built, using it to build trainer with 
+[2018-11-29 15:45:54,195 INFO] Building trainer.......
+[2018-11-29 15:45:54,195 INFO] * cross-entropy loss over 100005 tgt words (label smoothing 0.0)
+[2018-11-29 15:45:54,195 INFO] Starting training on GPU: [0]
+[2018-11-29 15:45:54,196 INFO] Start training...
+[2018-11-29 15:46:11,623 INFO] Loading train dataset from data/wdw100k_context2question.train.0.pt, number of examples: 127786
+[2018-11-29 16:05:06,062 INFO] Step 50/100000; acc:   3.38; ppl: 3992.05; xent: 8.29; lr: 1.00000; 433/367 tok/s;   1134 sec
+[2018-11-29 16:24:27,730 INFO] Step 100/100000; acc:  11.43; ppl: 690.12; xent: 6.54; lr: 1.00000; 154/773 tok/s;   2296 sec
+[2018-11-29 16:45:18,047 INFO] Step 150/100000; acc:  12.43; ppl: 603.41; xent: 6.40; lr: 1.00000; 361/435 tok/s;   3546 sec
+[2018-11-29 17:06:11,264 INFO] Step 200/100000; acc:  14.43; ppl: 395.65; xent: 5.98; lr: 1.00000; 379/287 tok/s;   4800 sec
+[2018-11-29 17:25:59,734 INFO] Step 250/100000; acc:  15.57; ppl: 391.55; xent: 5.97; lr: 1.00000; 260/448 tok/s;   5988 sec
+[2018-11-29 17:45:38,326 INFO] Step 300/100000; acc:  15.52; ppl: 368.33; xent: 5.91; lr: 1.00000; 320/425 tok/s;   7167 sec
+[2018-11-29 18:01:09,587 INFO] Step 350/100000; acc:  15.36; ppl: 331.39; xent: 5.80; lr: 1.00000; 247/241 tok/s;   8098 sec
+[2018-11-29 18:25:51,968 INFO] Step 400/100000; acc:  16.93; ppl: 336.92; xent: 5.82; lr: 1.00000; 245/408 tok/s;   9580 sec
+[2018-11-29 18:43:59,363 INFO] Step 450/100000; acc:  17.85; ppl: 222.71; xent: 5.41; lr: 1.00000; 274/510 tok/s;  10668 sec
+[2018-11-29 19:10:09,167 INFO] Step 500/100000; acc:  17.90; ppl: 316.45; xent: 5.76; lr: 1.00000; 292/447 tok/s;  12238 sec
+[2018-11-29 19:29:19,365 INFO] Step 550/100000; acc:  16.89; ppl: 275.48; xent: 5.62; lr: 1.00000; 282/261 tok/s;  13388 sec
+[2018-11-29 19:47:43,905 INFO] Step 600/100000; acc:  17.15; ppl: 249.52; xent: 5.52; lr: 1.00000; 325/271 tok/s;  14492 sec
+[2018-11-29 20:09:36,440 INFO] Step 650/100000; acc:  18.27; ppl: 237.66; xent: 5.47; lr: 1.00000; 246/624 tok/s;  15805 sec
+[2018-11-29 20:30:00,237 INFO] Step 700/100000; acc:  18.09; ppl: 257.93; xent: 5.55; lr: 1.00000; 377/403 tok/s;  17029 sec
+[2018-11-29 20:49:05,931 INFO] Step 750/100000; acc:  18.90; ppl: 199.53; xent: 5.30; lr: 1.00000; 293/222 tok/s;  18174 sec
+[2018-11-29 21:09:36,105 INFO] Step 800/100000; acc:  19.46; ppl: 151.29; xent: 5.02; lr: 1.00000; 528/576 tok/s;  19404 sec
+[2018-11-29 21:30:15,073 INFO] Step 850/100000; acc:  19.68; ppl: 225.35; xent: 5.42; lr: 1.00000; 333/288 tok/s;  20643 sec
+[2018-11-29 21:49:21,330 INFO] Step 900/100000; acc:  19.43; ppl: 184.35; xent: 5.22; lr: 1.00000; 200/564 tok/s;  21790 sec
+[2018-11-29 22:09:31,796 INFO] Step 950/100000; acc:  19.31; ppl: 191.72; xent: 5.26; lr: 1.00000; 297/596 tok/s;  23000 sec
+[2018-11-29 22:28:48,006 INFO] Step 1000/100000; acc:  20.74; ppl: 181.01; xent: 5.20; lr: 1.00000; 228/697 tok/s;  24156 sec
+[2018-11-29 22:48:46,465 INFO] Step 1050/100000; acc:  19.68; ppl: 190.68; xent: 5.25; lr: 1.00000; 305/237 tok/s;  25355 sec
+[2018-11-29 23:09:33,142 INFO] Step 1100/100000; acc:  20.35; ppl: 138.56; xent: 4.93; lr: 1.00000;  88/579 tok/s;  26602 sec
+[2018-11-29 23:34:08,698 INFO] Step 1150/100000; acc:  20.75; ppl: 169.43; xent: 5.13; lr: 1.00000; 293/354 tok/s;  28077 sec
+[2018-11-29 23:53:28,608 INFO] Step 1200/100000; acc:  19.63; ppl: 193.21; xent: 5.26; lr: 1.00000; 148/194 tok/s;  29237 sec
+[2018-11-30 00:15:29,712 INFO] Step 1250/100000; acc:  20.92; ppl: 161.86; xent: 5.09; lr: 1.00000; 261/310 tok/s;  30558 sec
+[2018-11-30 00:33:33,457 INFO] Step 1300/100000; acc:  19.62; ppl: 193.58; xent: 5.27; lr: 1.00000; 280/327 tok/s;  31642 sec
+[2018-11-30 00:53:32,036 INFO] Step 1350/100000; acc:  19.75; ppl: 173.89; xent: 5.16; lr: 1.00000; 269/290 tok/s;  32840 sec
+[2018-11-30 01:13:12,404 INFO] Step 1400/100000; acc:  19.79; ppl: 184.68; xent: 5.22; lr: 1.00000; 392/276 tok/s;  34021 sec
+[2018-11-30 01:32:16,244 INFO] Step 1450/100000; acc:  19.54; ppl: 193.73; xent: 5.27; lr: 1.00000; 195/645 tok/s;  35165 sec
+[2018-11-30 01:55:42,218 INFO] Step 1500/100000; acc:  21.72; ppl: 149.29; xent: 5.01; lr: 0.50000; 168/302 tok/s;  36571 sec
+[2018-11-30 02:14:08,178 INFO] Step 1550/100000; acc:  21.44; ppl: 146.42; xent: 4.99; lr: 0.50000; 421/380 tok/s;  37677 sec
+[2018-11-30 02:32:58,934 INFO] Step 1600/100000; acc:  21.41; ppl: 142.39; xent: 4.96; lr: 0.50000; 353/403 tok/s;  38807 sec
+[2018-11-30 02:54:47,547 INFO] Step 1650/100000; acc:  20.93; ppl: 165.12; xent: 5.11; lr: 0.50000; 403/213 tok/s;  40116 sec
+[2018-11-30 03:17:04,618 INFO] Step 1700/100000; acc:  20.91; ppl: 156.04; xent: 5.05; lr: 0.50000; 226/231 tok/s;  41453 sec
+[2018-11-30 03:38:42,389 INFO] Step 1750/100000; acc:  21.23; ppl: 154.42; xent: 5.04; lr: 0.25000; 492/360 tok/s;  42751 sec
+[2018-11-30 03:54:40,829 INFO] Step 1800/100000; acc:  19.92; ppl: 191.85; xent: 5.26; lr: 0.25000; 312/208 tok/s;  43709 sec
+[2018-11-30 04:17:23,801 INFO] Step 1850/100000; acc:  22.29; ppl: 135.02; xent: 4.91; lr: 0.25000; 297/312 tok/s;  45072 sec
+[2018-11-30 04:35:26,073 INFO] Step 1900/100000; acc:  23.94; ppl: 122.57; xent: 4.81; lr: 0.25000; 449/519 tok/s;  46154 sec
+[2018-11-30 04:53:46,766 INFO] Step 1950/100000; acc:  23.30; ppl: 121.83; xent: 4.80; lr: 0.25000; 372/437 tok/s;  47255 sec
+[2018-11-30 05:15:25,760 INFO] Step 2000/100000; acc:  20.93; ppl: 161.11; xent: 5.08; lr: 0.25000; 408/244 tok/s;  48554 sec
+[2018-11-30 05:36:30,853 INFO] Step 2050/100000; acc:  23.56; ppl: 101.13; xent: 4.62; lr: 0.12500; 389/480 tok/s;  49819 sec
+[2018-11-30 05:57:05,709 INFO] Step 2100/100000; acc:  21.49; ppl: 157.79; xent: 5.06; lr: 0.12500; 295/391 tok/s;  51054 sec
+[2018-11-30 06:17:02,501 INFO] Step 2150/100000; acc:  23.99; ppl: 97.14; xent: 4.58; lr: 0.12500; 218/609 tok/s;  52251 sec
+[2018-11-30 06:35:46,240 INFO] Step 2200/100000; acc:  22.72; ppl: 138.14; xent: 4.93; lr: 0.12500; 232/528 tok/s;  53375 sec
+[2018-11-30 06:53:02,398 INFO] Step 2250/100000; acc:  22.63; ppl: 122.57; xent: 4.81; lr: 0.12500; 302/442 tok/s;  54411 sec
+[2018-11-30 07:14:57,851 INFO] Step 2300/100000; acc:  22.98; ppl: 124.31; xent: 4.82; lr: 0.12500; 204/155 tok/s;  55726 sec
+[2018-11-30 07:36:17,526 INFO] Step 2350/100000; acc:  23.38; ppl: 122.10; xent: 4.80; lr: 0.06250; 312/388 tok/s;  57006 sec
+[2018-11-30 07:54:55,567 INFO] Step 2400/100000; acc:  23.35; ppl: 104.46; xent: 4.65; lr: 0.06250; 481/384 tok/s;  58124 sec
+[2018-11-30 08:13:01,294 INFO] Step 2450/100000; acc:  22.93; ppl: 128.76; xent: 4.86; lr: 0.06250; 464/426 tok/s;  59210 sec
+[2018-11-30 08:35:39,077 INFO] Step 2500/100000; acc:  22.64; ppl: 131.67; xent: 4.88; lr: 0.06250; 382/407 tok/s;  60567 sec
+[2018-11-30 08:54:16,922 INFO] Step 2550/100000; acc:  22.10; ppl: 149.38; xent: 5.01; lr: 0.06250; 206/181 tok/s;  61685 sec
+[2018-11-30 09:14:08,000 INFO] Step 2600/100000; acc:  21.28; ppl: 155.41; xent: 5.05; lr: 0.06250; 262/193 tok/s;  62876 sec
+[2018-11-30 09:34:19,859 INFO] Step 2650/100000; acc:  23.27; ppl: 119.78; xent: 4.79; lr: 0.03125; 370/236 tok/s;  64088 sec
+[2018-11-30 09:55:11,468 INFO] Step 2700/100000; acc:  23.33; ppl: 111.66; xent: 4.72; lr: 0.03125; 375/556 tok/s;  65340 sec
+[2018-11-30 10:16:21,208 INFO] Step 2750/100000; acc:  23.64; ppl: 114.76; xent: 4.74; lr: 0.03125; 399/355 tok/s;  66610 sec
+[2018-11-30 10:36:53,791 INFO] Step 2800/100000; acc:  22.99; ppl: 127.49; xent: 4.85; lr: 0.03125; 314/673 tok/s;  67842 sec
+[2018-11-30 10:56:59,034 INFO] Step 2850/100000; acc:  24.19; ppl: 116.22; xent: 4.76; lr: 0.03125; 351/539 tok/s;  69047 sec
+[2018-11-30 11:16:38,966 INFO] Step 2900/100000; acc:  23.16; ppl: 141.52; xent: 4.95; lr: 0.03125; 316/422 tok/s;  70227 sec
+[2018-11-30 11:37:26,183 INFO] Step 2950/100000; acc:  26.30; ppl: 91.01; xent: 4.51; lr: 0.01562; 518/586 tok/s;  71475 sec
+[2018-11-30 11:58:38,755 INFO] Step 3000/100000; acc:  23.78; ppl: 115.37; xent: 4.75; lr: 0.01562; 572/402 tok/s;  72747 sec
+[2018-11-30 12:18:48,650 INFO] Step 3050/100000; acc:  23.87; ppl: 120.22; xent: 4.79; lr: 0.01562; 357/471 tok/s;  73957 sec
+[2018-11-30 12:40:38,093 INFO] Step 3100/100000; acc:  23.08; ppl: 130.75; xent: 4.87; lr: 0.01562; 247/276 tok/s;  75266 sec
+[2018-11-30 12:58:37,935 INFO] Step 3150/100000; acc:  23.12; ppl: 123.17; xent: 4.81; lr: 0.01562; 297/272 tok/s;  76346 sec
+[2018-11-30 13:23:33,014 INFO] Step 3200/100000; acc:  21.32; ppl: 164.62; xent: 5.10; lr: 0.00781; 244/153 tok/s;  77841 sec
+[2018-11-30 13:42:30,380 INFO] Step 3250/100000; acc:  25.74; ppl: 98.04; xent: 4.59; lr: 0.00781; 463/539 tok/s;  78979 sec
+[2018-11-30 14:03:52,722 INFO] Step 3300/100000; acc:  24.96; ppl: 108.72; xent: 4.69; lr: 0.00781; 252/405 tok/s;  80261 sec
+[2018-11-30 14:26:16,964 INFO] Step 3350/100000; acc:  23.91; ppl: 107.78; xent: 4.68; lr: 0.00781; 358/579 tok/s;  81605 sec

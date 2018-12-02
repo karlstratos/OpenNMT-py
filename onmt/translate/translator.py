@@ -186,10 +186,12 @@ class Translator(object):
         loss = NMTLossCompute(self.model.generator, self.fields["tgt"].vocab)
         loss.to(cur_device)
 
+        num_sents = 0
         for batch in data_iter:
             src = inputters.make_features(batch, 'src', self.data_type)
             if self.data_type == 'text':
                 _, src_lengths = batch.src
+                num_sents += len(src_lengths)
             elif self.data_type == 'audio':
                 src_lengths = batch.src_lengths
             else:
@@ -206,7 +208,10 @@ class Translator(object):
             # Update statistics.
             stats.update(batch_stats)
 
+        print('%s sents' % num_sents)
         print('ppl:     %g' % stats.ppl())
+        print('sxt:     %g' % (math.log(stats.ppl()) * stats.n_words
+                               / num_sents))
         print('acc:     %g' % stats.accuracy())
         #---------------------------------------
 
