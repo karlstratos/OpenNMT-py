@@ -93,6 +93,7 @@ class GlobalAttention(nn.Module):
             self.linear_cover = nn.Linear(1, dim, bias=False)
 
     def score(self, h_t, h_s):
+        #         BxT'xd  BxTxd      ===========>      BxT'xT
         """
         Args:
           h_t (`FloatTensor`): sequence of queries `[batch x tgt_len x dim]`
@@ -114,11 +115,12 @@ class GlobalAttention(nn.Module):
 
         if self.attn_type in ["general", "dot"]:
             if self.attn_type == "general":
-                h_t_ = h_t.view(tgt_batch * tgt_len, tgt_dim)
-                h_t_ = self.linear_in(h_t_)
-                h_t = h_t_.view(tgt_batch, tgt_len, tgt_dim)
-            h_s_ = h_s.transpose(1, 2)
-            # (batch, t_len, d) x (batch, d, s_len) --> (batch, t_len, s_len)
+                h_t_ = h_t.view(tgt_batch * tgt_len, tgt_dim)  # BT'xd
+                h_t_ = self.linear_in(h_t_)                    # BT'xd
+                h_t = h_t_.view(tgt_batch, tgt_len, tgt_dim)   # BxT'xd
+            h_s_ = h_s.transpose(1, 2)  # BxdxT
+
+            #            (BxT'xd) (BxdxT)  ------->  (BxT'xT)
             return torch.bmm(h_t, h_s_)
         else:
             dim = self.dim
@@ -136,6 +138,7 @@ class GlobalAttention(nn.Module):
             return self.v(wquh.view(-1, dim)).view(tgt_batch, tgt_len, src_len)
 
     def forward(self, source, memory_bank, memory_lengths=None, coverage=None):
+        #            BxT'xd     BxTxd         B
         """
 
         Args:
@@ -151,7 +154,6 @@ class GlobalAttention(nn.Module):
           * Attention distribtutions for each query
              `[tgt_len x batch x src_len]`
         """
-
         # one step input
         if source.dim() == 2:
             one_step = True
@@ -176,29 +178,43 @@ class GlobalAttention(nn.Module):
 
         # compute attention scores, as in Luong et al.
         align = self.score(source, memory_bank)
+        #  (B x T' x T)
+        #  align[b,t',t] = score(w_t, w_t') in batch b
 
         if memory_lengths is not None:
             mask = sequence_mask(memory_lengths, max_len=align.size(-1))
-            mask = mask.unsqueeze(1)  # Make it broadcastable.
+            # {0,1}^{B x T}
+            mask = mask.unsqueeze(1)  # Make it broadcastable: {0,1}^{B x 1 x T}
+
             align.masked_fill_(1 - mask, -float('inf'))
+            #  align[b,t',t] = -inf           if t > len(b)
 
         # Softmax or sparsemax to normalize attention weights
         if self.attn_func == "softmax":
+            # (BT' x T): apply softmax on each column
             align_vectors = F.softmax(align.view(batch*target_l, source_l), -1)
         else:
             align_vectors = sparsemax(align.view(batch*target_l, source_l), -1)
         align_vectors = align_vectors.view(batch, target_l, source_l)
+        # B x T' x T: [b,t',:] is a distrib like [0.02, 0.02, ..., 0.0, 0.0]
 
         # each context vector c_t is the weighted average
         # over all the source hidden states
+        #
+        #              (B x T' x T) (B x T x d) ---------> (B x T' x d)
         c = torch.bmm(align_vectors, memory_bank)
+        # c[b,t',:] = context vector for w_t' in batch b
 
-        # concatenate
+        # context + query
         concat_c = torch.cat([c, source], 2).view(batch*target_l, dim*2)
-        attn_h = self.linear_out(concat_c).view(batch, target_l, dim)
-        if self.attn_type in ["general", "dot"]:
-            attn_h = torch.tanh(attn_h)
 
+        # shrink it: (BT' x 2d) ---> (B x T' x d)
+        attn_h = self.linear_out(concat_c).view(batch, target_l, dim)
+
+        if self.attn_type in ["general", "dot"]:
+            attn_h = torch.tanh(attn_h)  # Eq. (5) in Luong (2015)
+
+        # T' = 1 (e.g., input feeding)
         if one_step:
             attn_h = attn_h.squeeze(1)
             align_vectors = align_vectors.squeeze(1)
@@ -212,8 +228,8 @@ class GlobalAttention(nn.Module):
             aeq(source_l, source_l_)
 
         else:
-            attn_h = attn_h.transpose(0, 1).contiguous()
-            align_vectors = align_vectors.transpose(0, 1).contiguous()
+            attn_h = attn_h.transpose(0, 1).contiguous()  # TRANSPOSED
+            align_vectors = align_vectors.transpose(0, 1).contiguous() # ''
             # Check output sizes
             target_l_, batch_, dim_ = attn_h.size()
             aeq(target_l, target_l_)
@@ -224,4 +240,5 @@ class GlobalAttention(nn.Module):
             aeq(batch, batch_)
             aeq(source_l, source_l_)
 
+        # (T' x B x d)  (T' x B x T)
         return attn_h, align_vectors

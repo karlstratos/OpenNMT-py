@@ -328,7 +328,7 @@ class Trainer(object):
                 if self.grad_accum_count == 1:
                     self.model.zero_grad()
                 outputs, attns = \
-                    self.model(src, tgt, src_lengths)
+                    self.model(src, tgt, src_lengths)  # Wrong initial hidden?
 
                 # 3. Compute loss in shards for memory efficiency.
                 #---------------------------------------------------------------

@@ -167,15 +167,33 @@ class RNNDecoderBase(nn.Module):
                         `[tgt_len x batch x src_len]`.
         """
         # Run the forward pass of the RNN.
+
+        #-----------------------------------------------------------------------
+        # dec_state: (l x B x d)^2
+        #
+        #        Just the final LSTM H/C states for all layers and batches
+        #
+        # dec_outs: T' x B x d
+        #
+        #        Ultimate context vectors at all tgt positions, input feeding!
+        #
+        # attns: {'std':(T' x B x T)}
+        #
+        #        attns["std"][t'][b][t] = attention of t' on t in batch b
+        #
+        #-----------------------------------------------------------------------
         dec_state, dec_outs, attns = self._run_forward_pass(
             tgt, memory_bank, memory_lengths=memory_lengths)
 
         # Update the state with the result.
-        output = dec_outs[-1]
+        output = dec_outs[-1]  # (T' x B x d) -> (B x d)
         coverage = None
         if "coverage" in attns:
             coverage = attns["coverage"][-1].unsqueeze(0)
+
+        #              (l x B x d)^2     (1 x B x d)
         self.update_state(dec_state, output.unsqueeze(0), coverage)
+        # This just updates self.state
 
         # Concatenates sequence of tensors along a new dimension.
         # NOTE: v0.3 to 0.4: dec_outs / attns[*] may not be list
@@ -233,27 +251,34 @@ class StdRNNDecoder(RNNDecoderBase):
 
         # Initialize local and return variables.
         attns = {}
-        emb = self.embeddings(tgt)
+        emb = self.embeddings(tgt)  # T' x B x d^w
 
         # Run the forward pass of the RNN.
         if isinstance(self.rnn, nn.GRU):
             rnn_output, dec_state = self.rnn(emb, self.state["hidden"][0])
         else:
+            #-------------------------------------------------------------------
+            # Batch RNN forward
+            #
+            # (T x B x d) (l x B x d)^2
             rnn_output, dec_state = self.rnn(emb, self.state["hidden"])
 
         # Check
-        tgt_len, tgt_batch, _ = tgt.size()
-        output_len, output_batch, _ = rnn_output.size()
+        tgt_len, tgt_batch, _ = tgt.size()               # T' x B x 1
+        output_len, output_batch, _ = rnn_output.size()  # T' x B x d
         aeq(tgt_len, output_len)
         aeq(tgt_batch, output_batch)
         # END
 
         # Calculate the attention.
         dec_outs, p_attn = self.attn(
-            rnn_output.transpose(0, 1).contiguous(),
-            memory_bank.transpose(0, 1),
-            memory_lengths=memory_lengths
+            rnn_output.transpose(0, 1).contiguous(),   # B x T' x d
+            memory_bank.transpose(0, 1),               # B x T  x d
+            memory_lengths=memory_lengths              # lens of src batch elems
         )
+        # dec_outs      (T' x B x d)  # final d-dimensional context vectors
+        # p_attn        (T' x B x T)
+
         attns["std"] = p_attn
 
         # Calculate the context gate.
@@ -267,6 +292,8 @@ class StdRNNDecoder(RNNDecoderBase):
                 dec_outs.view(tgt_len, tgt_batch, self.hidden_size)
 
         dec_outs = self.dropout(dec_outs)
+
+        #   (l x B x d)^2  (T' x B x d)   {'std':(T' x B x T)}
         return dec_state, dec_outs, attns
 
     def _build_rnn(self, rnn_type, **kwargs):
@@ -314,7 +341,7 @@ class InputFeedRNNDecoder(RNNDecoderBase):
         of arguments and return values.
         """
         # Additional args check.
-        input_feed = self.state["input_feed"].squeeze(0)
+        input_feed = self.state["input_feed"].squeeze(0)  # B x d (carried over)
         input_feed_batch, _ = input_feed.size()
         _, tgt_batch, _ = tgt.size()
         aeq(tgt_batch, input_feed_batch)
@@ -328,19 +355,29 @@ class InputFeedRNNDecoder(RNNDecoderBase):
         if self._coverage:
             attns["coverage"] = []
 
-        emb = self.embeddings(tgt)
-        assert emb.dim() == 3  # len x batch x embedding_dim
+        emb = self.embeddings(tgt)  # T' x B x d^w
+        assert emb.dim() == 3
 
         dec_state = self.state["hidden"]
         coverage = self.state["coverage"].squeeze(0) \
             if self.state["coverage"] is not None else None
 
-        # Input feed concatenates hidden state with
-        # input at every time step.
+        # Input feed concatenates hidden state with input at every time step.
+        #-----------------------------------------------------------------------
+        # (T' x B x d^w) -> (B x d^w)_{t'=1} ... (B x d^w)_{t'=T'}
+        #
+        #    Can't do batch RNN forward!
+        #-----------------------------------------------------------------------
         for _, emb_t in enumerate(emb.split(1)):
-            emb_t = emb_t.squeeze(0)
+            emb_t = emb_t.squeeze(0)  # 1 x B x d^w
+
+            # 1 x B x (d^w + d)
             decoder_input = torch.cat([emb_t, input_feed], 1)
+
+            # (1 x B x d) (l x B x d)^2
             rnn_output, dec_state = self.rnn(decoder_input, dec_state)
+
+            # (B x d)       (B x T)
             decoder_output, p_attn = self.attn(
                 rnn_output,
                 memory_bank.transpose(0, 1),
@@ -352,7 +389,7 @@ class InputFeedRNNDecoder(RNNDecoderBase):
                     decoder_input, rnn_output, decoder_output
                 )
             decoder_output = self.dropout(decoder_output)
-            input_feed = decoder_output
+            input_feed = decoder_output  # for next position
 
             dec_outs += [decoder_output]
             attns["std"] += [p_attn]
@@ -370,6 +407,8 @@ class InputFeedRNNDecoder(RNNDecoderBase):
                 attns["copy"] += [copy_attn]
             elif self._copy:
                 attns["copy"] = attns["std"]
+
+
         # Return result.
         return dec_state, dec_outs, attns
 
