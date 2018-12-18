@@ -2788,3 +2788,654 @@ acc:     27.0508
 [2018-11-29 15:17:36,353 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
 [2018-11-29 15:17:37,729 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
 [2018-11-29 15:17:39,104 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:21,947 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:21,956 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:22:21,956 INFO] Building model...
+[2018-12-04 14:22:21,956 INFO] Building encoder......
+[2018-12-04 14:22:21,957 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:22:22,283 INFO] Building decoder......
+[2018-12-04 14:22:22,428 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:22:22,886 INFO] Building NMTModel......
+[2018-12-04 14:22:22,886 INFO] Building generator......
+[2018-12-04 14:22:23,019 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:22:23,019 INFO] Initializing parameters......
+[2018-12-04 14:22:23,019 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:22:26,300 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:22:26,301 INFO] encoder: 36028500
+[2018-12-04 14:22:26,301 INFO] decoder: 66787002
+[2018-12-04 14:22:26,301 INFO] * number of parameters: 102815502
+[2018-12-04 14:22:26,302 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:22:26,302 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:22:26,302 INFO] Building trainer.......
+[2018-12-04 14:22:26,302 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:22:26,303 INFO] Starting training on GPU: [1]
+[2018-12-04 14:22:26,303 INFO] Start training...
+[2018-12-04 14:22:26,648 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:28,109 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:29,573 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:31,036 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:32,502 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:33,965 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:35,435 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:22:36,915 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:04,850 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:04,858 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:23:04,859 INFO] Building model...
+[2018-12-04 14:23:04,859 INFO] Building encoder......
+[2018-12-04 14:23:04,860 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:23:05,249 INFO] Building decoder......
+[2018-12-04 14:23:05,394 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:23:05,852 INFO] Building NMTModel......
+[2018-12-04 14:23:05,853 INFO] Building generator......
+[2018-12-04 14:23:05,984 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:23:05,985 INFO] Initializing parameters......
+[2018-12-04 14:23:05,985 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:23:10,237 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:23:10,239 INFO] encoder: 36028500
+[2018-12-04 14:23:10,239 INFO] decoder: 66787002
+[2018-12-04 14:23:10,240 INFO] * number of parameters: 102815502
+[2018-12-04 14:23:10,240 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:23:10,240 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:23:10,240 INFO] Building trainer.......
+[2018-12-04 14:23:10,241 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:23:10,241 INFO] Starting training on GPU: [0]
+[2018-12-04 14:23:10,242 INFO] Start training...
+[2018-12-04 14:23:10,627 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:17,145 INFO] Step 50/100000; acc:   5.00; ppl: 10397964978881454611103744.00; xent: 57.60; lr: 1.00000; 171/3422 tok/s;      7 sec
+[2018-12-04 14:23:29,508 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:29,516 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:23:29,516 INFO] Building model...
+[2018-12-04 14:23:29,517 INFO] Building encoder......
+[2018-12-04 14:23:29,518 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:23:29,905 INFO] Building decoder......
+[2018-12-04 14:23:30,049 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:23:30,507 INFO] Building NMTModel......
+[2018-12-04 14:23:30,508 INFO] Building generator......
+[2018-12-04 14:23:30,641 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:23:30,642 INFO] Initializing parameters......
+[2018-12-04 14:23:30,642 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:23:33,732 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:23:33,733 INFO] encoder: 36028500
+[2018-12-04 14:23:33,734 INFO] decoder: 66787002
+[2018-12-04 14:23:33,734 INFO] * number of parameters: 102815502
+[2018-12-04 14:23:33,734 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:23:33,734 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:23:33,734 INFO] Building trainer.......
+[2018-12-04 14:23:33,734 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:23:33,735 INFO] Starting training on GPU: [1]
+[2018-12-04 14:23:33,735 INFO] Start training...
+[2018-12-04 14:23:34,074 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:35,454 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:36,824 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:38,195 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:39,568 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:40,932 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:42,306 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:43,677 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:45,065 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:46,436 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:47,825 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:49,198 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:50,574 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:51,940 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:53,330 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:54,700 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:56,071 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:57,444 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:23:58,815 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:00,187 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:01,558 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:02,954 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:04,329 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:05,710 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:07,084 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:08,458 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:09,834 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:11,206 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:12,576 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:13,950 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:15,321 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:16,694 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:18,066 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:19,437 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:20,808 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:22,180 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:23,550 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:24,922 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:26,294 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:27,668 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:29,042 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:30,441 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:31,813 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:33,184 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:34,568 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:35,943 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:37,315 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:38,688 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:40,060 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:41,436 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:42,807 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:44,181 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:45,558 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:46,932 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:55,782 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:24:55,791 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:24:55,791 INFO] Building model...
+[2018-12-04 14:24:55,791 INFO] Building encoder......
+[2018-12-04 14:24:55,792 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:24:56,187 INFO] Building decoder......
+[2018-12-04 14:24:56,332 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:24:56,790 INFO] Building NMTModel......
+[2018-12-04 14:24:56,791 INFO] Building generator......
+[2018-12-04 14:24:56,924 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:24:56,924 INFO] Initializing parameters......
+[2018-12-04 14:24:56,924 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:25:01,108 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:25:01,110 INFO] encoder: 36028500
+[2018-12-04 14:25:01,110 INFO] decoder: 66787002
+[2018-12-04 14:25:01,110 INFO] * number of parameters: 102815502
+[2018-12-04 14:25:01,110 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:25:01,111 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:25:01,111 INFO] Building trainer.......
+[2018-12-04 14:25:01,111 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:25:01,112 INFO] Starting training on GPU: [1]
+[2018-12-04 14:25:01,112 INFO] Start training...
+[2018-12-04 14:25:01,516 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:02,905 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:04,292 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:05,680 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:07,070 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:08,457 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:09,843 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:11,232 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:12,621 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:14,025 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:15,415 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:16,819 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:18,209 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:19,600 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:20,997 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:22,386 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:36,020 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:36,028 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:25:36,029 INFO] Building model...
+[2018-12-04 14:25:36,029 INFO] Building encoder......
+[2018-12-04 14:25:36,030 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:25:36,424 INFO] Building decoder......
+[2018-12-04 14:25:36,568 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:25:37,028 INFO] Building NMTModel......
+[2018-12-04 14:25:37,028 INFO] Building generator......
+[2018-12-04 14:25:37,161 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:25:37,162 INFO] Initializing parameters......
+[2018-12-04 14:25:37,162 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:25:41,329 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:25:41,332 INFO] encoder: 36028500
+[2018-12-04 14:25:41,332 INFO] decoder: 66787002
+[2018-12-04 14:25:41,332 INFO] * number of parameters: 102815502
+[2018-12-04 14:25:41,333 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:25:41,334 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:25:41,334 INFO] Building trainer.......
+[2018-12-04 14:25:41,334 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:25:41,335 INFO] Starting training on GPU: [0]
+[2018-12-04 14:25:41,336 INFO] Start training...
+[2018-12-04 14:25:41,805 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:48,456 INFO] Step 50/100000; acc:   4.44; ppl: 6052014.15; xent: 15.62; lr: 1.00000; 132/3561 tok/s;      7 sec
+[2018-12-04 14:25:59,439 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:25:59,447 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:25:59,447 INFO] Building model...
+[2018-12-04 14:25:59,447 INFO] Building encoder......
+[2018-12-04 14:25:59,448 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:25:59,836 INFO] Building decoder......
+[2018-12-04 14:25:59,981 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:26:00,440 INFO] Building NMTModel......
+[2018-12-04 14:26:00,440 INFO] Building generator......
+[2018-12-04 14:26:00,573 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:26:00,573 INFO] Initializing parameters......
+[2018-12-04 14:26:00,573 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:26:04,732 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:26:04,735 INFO] encoder: 36028500
+[2018-12-04 14:26:04,735 INFO] decoder: 66787002
+[2018-12-04 14:26:04,735 INFO] * number of parameters: 102815502
+[2018-12-04 14:26:04,735 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:26:04,736 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:26:04,736 INFO] Building trainer.......
+[2018-12-04 14:26:04,736 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:26:04,738 INFO] Starting training on GPU: [1]
+[2018-12-04 14:26:04,738 INFO] Start training...
+[2018-12-04 14:26:05,204 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:06,634 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:08,030 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:09,426 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:10,823 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:12,220 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:13,616 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:15,014 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:16,411 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:17,825 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:19,239 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:20,636 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:22,031 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:37,610 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:37,618 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:26:37,618 INFO] Building model...
+[2018-12-04 14:26:37,618 INFO] Building encoder......
+[2018-12-04 14:26:37,619 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:26:38,009 INFO] Building decoder......
+[2018-12-04 14:26:38,153 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:26:38,610 INFO] Building NMTModel......
+[2018-12-04 14:26:38,611 INFO] Building generator......
+[2018-12-04 14:26:38,743 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:26:38,743 INFO] Initializing parameters......
+[2018-12-04 14:26:38,743 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:26:41,817 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:26:41,818 INFO] encoder: 36028500
+[2018-12-04 14:26:41,818 INFO] decoder: 66787002
+[2018-12-04 14:26:41,819 INFO] * number of parameters: 102815502
+[2018-12-04 14:26:41,819 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:26:41,819 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:26:41,819 INFO] Building trainer.......
+[2018-12-04 14:26:41,819 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:26:41,820 INFO] Starting training on GPU: [0]
+[2018-12-04 14:26:41,820 INFO] Start training...
+[2018-12-04 14:26:42,157 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:26:49,264 INFO] Step 50/100000; acc:   0.81; ppl: 38544.81; xent: 10.56; lr: 1.00000; 116/3585 tok/s;      7 sec
+[2018-12-04 14:26:55,376 INFO] Step 100/100000; acc:   4.35; ppl: 293693921920311552.00; xent: 40.22; lr: 1.00000; 154/3547 tok/s;     13 sec
+[2018-12-04 14:27:02,045 INFO] Step 150/100000; acc:   0.59; ppl: 38967.28; xent: 10.57; lr: 1.00000; 197/3355 tok/s;     20 sec
+[2018-12-04 14:27:08,481 INFO] Step 200/100000; acc:   0.31; ppl: 126133.65; xent: 11.75; lr: 1.00000; 205/3280 tok/s;     26 sec
+[2018-12-04 14:27:24,175 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:27:24,183 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:27:24,184 INFO] Building model...
+[2018-12-04 14:27:24,184 INFO] Building encoder......
+[2018-12-04 14:27:24,185 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:27:24,577 INFO] Building decoder......
+[2018-12-04 14:27:24,722 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:27:25,182 INFO] Building NMTModel......
+[2018-12-04 14:27:25,183 INFO] Building generator......
+[2018-12-04 14:27:25,316 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:27:25,317 INFO] Initializing parameters......
+[2018-12-04 14:27:25,317 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:27:28,536 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:27:28,538 INFO] encoder: 36028500
+[2018-12-04 14:27:28,538 INFO] decoder: 66787002
+[2018-12-04 14:27:28,538 INFO] * number of parameters: 102815502
+[2018-12-04 14:27:28,538 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:27:28,539 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:27:28,539 INFO] Building trainer.......
+[2018-12-04 14:27:28,539 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:27:28,540 INFO] Starting training on GPU: [0]
+[2018-12-04 14:27:28,540 INFO] Start training...
+[2018-12-04 14:27:28,904 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:27:35,644 INFO] Step 50/100000; acc:   1.17; ppl: 26386.53; xent: 10.18; lr: 1.00000; 132/3377 tok/s;      7 sec
+[2018-12-04 14:27:37,908 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:27:37,916 INFO]  * vocabulary size. source = 3; target = 10002
+[2018-12-04 14:27:37,917 INFO] Building model...
+[2018-12-04 14:27:37,917 INFO] Building encoder......
+[2018-12-04 14:27:37,918 INFO] RNNEncoder: type LSTM, bidir 0, layers 2, hidden size 1500, dropout 0.65
+[2018-12-04 14:27:38,302 INFO] Building decoder......
+[2018-12-04 14:27:38,455 INFO] InputFeedRNNDecoder: type LSTM, bidir 0, layers 2, hidden size 1500, general global attn (softmax), coverage attn 0, copy attn 0, dropout 0.65
+[2018-12-04 14:27:38,911 INFO] Building NMTModel......
+[2018-12-04 14:27:38,911 INFO] Building generator......
+[2018-12-04 14:27:39,046 INFO] ** Sharing generator softmax with tgt word embedding
+[2018-12-04 14:27:39,046 INFO] Initializing parameters......
+[2018-12-04 14:27:39,047 INFO] WARNING: NOT USING XAVIER INITIALIZATION? WILL JUST USE UNIF(+- 0.10)
+[2018-12-04 14:27:42,155 INFO] Step 100/100000; acc:   0.83; ppl: 60153.01; xent: 11.00; lr: 1.00000; 122/3667 tok/s;     13 sec
+[2018-12-04 14:27:43,069 INFO] NMTModel(
+  (encoder): RNNEncoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(3, 1500, padding_idx=1)
+        )
+      )
+    )
+    (rnn): LSTM(1500, 1500, num_layers=2, dropout=0.65)
+  )
+  (decoder): InputFeedRNNDecoder(
+    (embeddings): Embeddings(
+      (make_embedding): Sequential(
+        (emb_luts): Elementwise(
+          (0): Embedding(10002, 1500, padding_idx=1)
+        )
+      )
+    )
+    (dropout): Dropout(p=0.65)
+    (rnn): StackedLSTM(
+      (dropout): Dropout(p=0.65)
+      (layers): ModuleList(
+        (0): LSTMCell(3000, 1500)
+        (1): LSTMCell(1500, 1500)
+      )
+    )
+    (attn): GlobalAttention(
+      (linear_in): Linear(in_features=1500, out_features=1500, bias=False)
+      (linear_out): Linear(in_features=3000, out_features=1500, bias=False)
+    )
+  )
+  (generator): Sequential(
+    (0): Linear(in_features=1500, out_features=10002, bias=True)
+    (1): LogSoftmax()
+  )
+)
+[2018-12-04 14:27:43,071 INFO] encoder: 36028500
+[2018-12-04 14:27:43,071 INFO] decoder: 66787002
+[2018-12-04 14:27:43,071 INFO] * number of parameters: 102815502
+[2018-12-04 14:27:43,071 INFO] * Opt: sgd (rate 1.00000, maxgnorm 5.0, standard decay, decay_rate 0.5, start_decay_at 50000, decay_every 10000, ab1 0.90000, ab2 0.99900, adagradaccum 0.0, warmupsteps 4000, hiddensize 1500)
+[2018-12-04 14:27:43,072 INFO] * model_saver built, using it to build trainer with 
+[2018-12-04 14:27:43,072 INFO] Building trainer.......
+[2018-12-04 14:27:43,072 INFO] * cross-entropy loss over 10002 tgt words (label smoothing 0.0)
+[2018-12-04 14:27:43,073 INFO] Starting training on GPU: [0]
+[2018-12-04 14:27:43,073 INFO] Start training...
+[2018-12-04 14:27:43,437 INFO] Loading train dataset from data/ptb.train.0.pt, number of examples: 42068
+[2018-12-04 14:27:48,443 INFO] Step 150/100000; acc:   5.00; ppl: 177671897814611.62; xent: 32.81; lr: 1.00000; 161/3532 tok/s;     20 sec
+[2018-12-04 14:27:50,147 INFO] Step 50/100000; acc:   0.42; ppl: 42405.50; xent: 10.66; lr: 1.00000; 262/3145 tok/s;      7 sec
+[2018-12-04 14:27:55,162 INFO] Step 200/100000; acc:   1.35; ppl: 72843997.97; xent: 18.10; lr: 1.00000; 519/1922 tok/s;     26 sec
+[2018-12-04 14:27:56,571 INFO] Step 100/100000; acc:   5.41; ppl: 912895.83; xent: 13.72; lr: 1.00000; 189/3320 tok/s;     13 sec
+[2018-12-04 14:28:01,673 INFO] Step 250/100000; acc:   1.39; ppl: 110847.26; xent: 11.62; lr: 1.00000; 184/3314 tok/s;     33 sec
+[2018-12-04 14:28:03,377 INFO] Step 150/100000; acc:   0.00; ppl: 1647878.53; xent: 14.31; lr: 1.00000; 380/2562 tok/s;     20 sec
+[2018-12-04 14:28:08,372 INFO] Step 300/100000; acc:   0.49; ppl: 547833.38; xent: 13.21; lr: 1.00000; 269/2729 tok/s;     39 sec
+[2018-12-04 14:28:09,827 INFO] Step 200/100000; acc:   2.10; ppl: 43398.40; xent: 10.68; lr: 1.00000; 115/3558 tok/s;     26 sec
+[2018-12-04 14:28:15,398 INFO] Step 350/100000; acc:   1.63; ppl: 15650.59; xent: 9.66; lr: 1.00000; 302/2775 tok/s;     46 sec
+[2018-12-04 14:28:16,460 INFO] Step 250/100000; acc:   2.13; ppl: 24219.52; xent: 10.09; lr: 1.00000;  71/3312 tok/s;     33 sec
+[2018-12-04 14:28:21,834 INFO] Step 400/100000; acc:   1.67; ppl: 401163.37; xent: 12.90; lr: 1.00000; 249/2988 tok/s;     53 sec
+[2018-12-04 14:28:23,104 INFO] Step 300/100000; acc:   1.09; ppl: 44704.60; xent: 10.71; lr: 1.00000; 151/3467 tok/s;     40 sec
+[2018-12-04 14:28:28,484 INFO] Step 450/100000; acc:   1.08; ppl: 14141.25; xent: 9.56; lr: 1.00000; 140/3222 tok/s;     60 sec
+[2018-12-04 14:28:30,377 INFO] Step 350/100000; acc:   0.78; ppl: 78564.52; xent: 11.27; lr: 1.00000; 242/3128 tok/s;     47 sec
+[2018-12-04 14:28:35,275 INFO] Step 500/100000; acc:   1.03; ppl: 123951.12; xent: 11.73; lr: 1.00000; 120/3487 tok/s;     66 sec
+[2018-12-04 14:28:36,205 INFO] Step 400/100000; acc:   5.77; ppl: 27016.50; xent: 10.20; lr: 1.00000; 239/3104 tok/s;     53 sec
+[2018-12-04 14:28:41,758 INFO] Step 550/100000; acc:   1.92; ppl: 24155.34; xent: 10.09; lr: 1.00000; 238/3094 tok/s;     73 sec
+[2018-12-04 14:28:43,198 INFO] Step 450/100000; acc:   5.88; ppl: 32186663497148188.00; xent: 38.01; lr: 1.00000; 201/3418 tok/s;     60 sec
+[2018-12-04 14:28:48,681 INFO] Step 600/100000; acc:   3.04; ppl: 46037.00; xent: 10.74; lr: 1.00000; 149/3424 tok/s;     80 sec
+[2018-12-04 14:28:49,491 INFO] Step 500/100000; acc:   1.60; ppl: 20433.91; xent: 9.92; lr: 1.00000; 140/3498 tok/s;     66 sec
+[2018-12-04 14:28:55,162 INFO] Step 650/100000; acc:   2.08; ppl: 107645.94; xent: 11.59; lr: 1.00000; 248/2981 tok/s;     86 sec
+[2018-12-04 14:28:56,384 INFO] Step 550/100000; acc:   2.42; ppl: 11186660.74; xent: 16.23; lr: 1.00000; 126/3643 tok/s;     73 sec
+[2018-12-04 14:29:02,002 INFO] Step 700/100000; acc:   5.08; ppl: 16451946.94; xent: 16.62; lr: 1.00000; 213/3143 tok/s;     93 sec
+[2018-12-04 14:29:02,828 INFO] Step 600/100000; acc:   1.43; ppl: 18577.69; xent: 9.83; lr: 1.00000; 164/3444 tok/s;     79 sec
+[2018-12-04 14:29:08,116 INFO] Step 750/100000; acc:   3.64; ppl: 115227310764045.20; xent: 32.38; lr: 1.00000; 123/3380 tok/s;     99 sec

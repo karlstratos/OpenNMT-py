@@ -39,9 +39,14 @@ python preprocess.py -train_src data/wdw100k/train_context_articles_vocab100000.
  python preprocess.py -train_src data/wdw_small_maxlen100_vocab10k/train_context_articles_head50k_maxlen100_vocab10000.txt  -train_tgt data/wdw_small_maxlen100_vocab10k/train_question_articles_head50k_maxlen100_vocab10000.txt -valid_src data/wdw_small_maxlen100_vocab10k/val_context_articles_head5k_maxlen100_vocab10000.txt -valid_tgt data/wdw_small_maxlen100_vocab10k/val_question_articles_head5k_maxlen100_vocab10000.txt -save_data data/wdw_small_maxlen100_vocab10k_context2question -src_seq_length 1000000 -tgt_seq_length 1000000 -src_vocab_size 1000000 -tgt_vocab_size 1000000 -share_vocab
 python preprocess.py -train_src data/wdw_small_maxlen100_vocab10k/train_null_articles_small.txt  -train_tgt data/wdw_small_maxlen100_vocab10k/train_question_articles_head50k_maxlen100_vocab10000.txt -valid_src data/wdw_small_maxlen100_vocab10k/val_null_articles_small.txt -valid_tgt data/wdw_small_maxlen100_vocab10k/val_question_articles_head5k_maxlen100_vocab10000.txt -save_data data/wdw_small_maxlen100_vocab10k_null2question -src_seq_length 1000000 -tgt_seq_length 1000000 -src_vocab_size 1000000 -tgt_vocab_size 1000000
 
+python preprocess.py -train_src data/wdw_small_maxlen100_vocab100k/train_context_articles_head50k_maxlen100_vocab100000.txt  -train_tgt data/wdw_small_maxlen100_vocab100k/train_question_articles_head50k_maxlen100_vocab100000.txt -valid_src data/wdw_small_maxlen100_vocab100k/val_context_articles_head5k_maxlen100_vocab100000.txt -valid_tgt data/wdw_small_maxlen100_vocab100k/val_question_articles_head5k_maxlen100_vocab100000.txt -save_data data/wdw_small_maxlen100_vocab100k_context2question -src_seq_length 1000000 -tgt_seq_length 1000000 -src_vocab_size 1000000 -tgt_vocab_size 1000000 -share_vocab
+python preprocess.py -train_src data/wdw_small_maxlen100_vocab100k/train_null_articles_small.txt  -train_tgt data/wdw_small_maxlen100_vocab100k/train_question_articles_head50k_maxlen100_vocab100000.txt -valid_src data/wdw_small_maxlen100_vocab100k/val_null_articles_small.txt -valid_tgt data/wdw_small_maxlen100_vocab100k/val_question_articles_head5k_maxlen100_vocab100000.txt -save_data data/wdw_small_maxlen100_vocab100k_null2question -src_seq_length 1000000 -tgt_seq_length 1000000 -src_vocab_size 1000000 -tgt_vocab_size 1000000
 
 python train.py -data data/wdw_small_maxlen100_vocab10k_context2question -save_model models/wdw_small_maxlen100_vocab10k_context2question_1 -share_embeddings -share_decoder_embeddings -batch_size 20 -truncated_decoder 35 -layers 2 -rnn_size 1500 -word_vec_size 1500 -dropout 0.65 -gpu_ranks 0 -log logs/log_wdw_small_maxlen100_vocab10k_context2question_2lstm1500_dropout0.65_batch20_trunc35.txt
 python train.py -data data/wdw_small_maxlen100_vocab10k_null2question -save_model models/wdw_small_maxlen100_vocab10k_null2question_1 -share_decoder_embeddings -batch_size 20 -truncated_decoder 35 -layers 2 -rnn_size 1500 -word_vec_size 1500 -dropout 0.65 -gpu_ranks 0 -log logs/log_wdw_small_maxlen100_vocab10k_null2question_2lstm1500_dropout0.65_batch20_trunc35.txt
+
+CUDA_VISIBLE_DEVICES=0 python train.py -data data/wdw_small_maxlen100_vocab100k_context2question -save_model models/wdw_small_maxlen100_vocab100k_context2question_1 -share_embeddings -share_decoder_embeddings -batch_size 20 -truncated_decoder 0 -layers 2 -rnn_size 1500 -word_vec_size 1500 -dropout 0.65 -gpu_ranks 0 -log logs/log_wdw_small_maxlen100_vocab100k_context2question_2lstm1500_dropout0.65_batch20_trunc0.txt
+
 
 python translate.py -model models/wdw_small_maxlen100_vocab10k_context2question_1_step_100000_ppl_33.20_acc_32.60.pt -src data/wdw_small_maxlen100_vocab10k/test_context_articles_head5k_maxlen100_vocab10000.txt -tgt data/wdw_small_maxlen100_vocab10k/test_question_articles_head5k_maxlen100_vocab10000.txt -verbose -batch_size 64 -max_length 1000000 -ppl -gpu 0
 5000 sents
@@ -55,6 +60,17 @@ python translate.py -model models/wdw_small_maxlen100_vocab10k_null2question_1_s
 ppl:     39.5675
 sxt:     354.133
 acc:     29.7021
-=======
-python train.py -data data/ptb -save_model models/ptb_transformer -layers 6 -rnn_size 512 -word_vec_size 512 -transformer_ff 2048 -heads 8 -encoder_type transformer -decoder_type transformer -position_encoding -train_steps 200000 -max_generator_batches 2 -dropout 0.1 -batch_size 4096 -batch_type tokens -normalization tokens -accum_count 1 -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 -max_grad_norm 0 -param_init 0  -param_init_glorot -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -gpu_ranks 0 -truncated_decoder 35 -share_decoder_embeddings -log logs/log_ptb_6tansformer_512in_2048fat_8heads.txt
->>>>>>> 9ec8b98c66f8013b4fbab82ea3dff0e1ddf4e9b8
+
+
+
+python translate.py -model models/wdw_small_maxlen100_vocab100k_null2question_1_step_70000_ppl_52.08_acc_31.04.pt -src data/wdw_small_maxlen100_vocab100k/test_context_articles_head5k_maxlen100_vocab100000.txt -tgt data/wdw_small_maxlen100_vocab100k/test_question_articles_head5k_maxlen100_vocab100000.txt -verbose -batch_size 64 -max_length 1000000 -ppl -gpu 0
+
+ppl:     56.4197
+sxt:     388.296
+acc:     30.076
+
+python translate.py -model models/wdw_small_maxlen100_vocab100k_context2question_1_step_60000_ppl_45.41_acc_33.34.pt -src data/wdw_small_maxlen100_vocab100k/test_context_articles_head5k_maxlen100_vocab100000.txt -tgt data/wdw_small_maxlen100_vocab100k/test_question_articles_head5k_maxlen100_vocab100000.txt -verbose -batch_size 64 -max_length 1000000 -ppl -gpu 0
+
+ppl:     46.1614
+sxt:     368.974
+acc:     33.128
