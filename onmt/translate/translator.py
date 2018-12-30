@@ -521,9 +521,18 @@ class Translator(object):
         if isinstance(memory_bank, tuple):
             memory_bank = tuple(rvar(x.data) for x in memory_bank)
         else:
-            memory_bank = rvar(memory_bank.data)
+            memory_bank = rvar(memory_bank.data)  # T_max x B x d
+            #                                        => T_max x KB x d
+
         memory_lengths = src_lengths.repeat(beam_size)
+        #    src_lengths: [46, 42, 41, 32]
+        # memory_lengths: [46, 42, 41, 32, 46, 42, 41, 32, 46, 42, 41, 32]
+        #
+        # All elts of j-th beam share same src sent: len memory_lengths[j]
+
         self.model.decoder.map_state(_repeat_beam_size_times)
+        #           H,C: L x B x d => L x KB x d
+        #    input_feed: 1 x B x d => 1 x KB x d
 
         # (3) run the decoder to generate sentences, using beam search.
         for i in range(self.max_length):
@@ -534,6 +543,11 @@ class Translator(object):
             # Get all the pending current beam words and arrange for forward.
             inp = var(torch.stack([b.get_current_state() for b in beam])
                       .t().contiguous().view(1, -1))
+            #  2   2   2   2
+            #  1   1   1   1      =>
+            #  1   1   1   1
+            #
+            # inp: 2 2 2 2 1 1 1 1 1 1 1 1  (batch_size 4, beam size 3)
 
             # Turn any copied words to UNKs
             # 0 is unk
@@ -543,23 +557,23 @@ class Translator(object):
 
             # Temporary kludge solution to handle changed dim expectation
             # in the decoder
-            inp = inp.unsqueeze(2)
+            inp = inp.unsqueeze(2)  # (1 x KB) => (1 x KB x 1)
 
             # Run one step.
             dec_out, attn = self.model.decoder(inp, memory_bank,
                                                memory_lengths=memory_lengths,
                                                step=i)
-
-            dec_out = dec_out.squeeze(0)
+            dec_out = dec_out.squeeze(0)  # KB x d: all current context vectors
 
             # dec_out: beam x rnn_size
 
             # (b) Compute a vector of batch x beam word scores.
             if not self.copy_attn:
-                out = self.model.generator.forward(dec_out).data
-                out = unbottle(out)
+                out = self.model.generator.forward(dec_out).data  # KB x V
+                out = unbottle(out)  # K x B x V
+
                 # beam x tgt_vocab
-                beam_attn = unbottle(attn["std"])
+                beam_attn = unbottle(attn["std"])  # K x B x T_src
             else:
                 out = self.model.generator.forward(dec_out,
                                                    attn["copy"].squeeze(0),
@@ -574,9 +588,17 @@ class Translator(object):
 
             # (c) Advance each beam.
             select_indices_array = []
-            for j, b in enumerate(beam):
-                b.advance(out[:, j],
-                          beam_attn.data[:, j, :memory_lengths[j]])
+            for j, b in enumerate(beam):  # b: beam for j-th batch elt (sent)
+
+                # out[:, j] (K x V)
+                # out[i, j]     (V): i-th cand's scores for j-th sent
+                #
+                # attn_out := beam_attn.data[:, j, :memory_lengths[j]]
+                # attn_out   (K x T_src_j)
+                # attn_out[i, :] (T_src_j): i-th cand's attn for j-th sent
+                b.advance(out[:, j, :],
+                          beam_attn.data[:, j, :memory_lengths[j]], vocab)
+
                 select_indices_array.append(
                     b.get_current_origin() * batch_size + j)
             select_indices = torch.cat(select_indices_array) \
@@ -587,8 +609,12 @@ class Translator(object):
             self.model.decoder.map_state(
                 lambda state, dim: state.index_select(dim, select_indices))
 
+        for b in beam:
+            if not b.done():
+                b.all_scores.append(b.scores)
+
         # (4) Extract sentences from beam.
-        ret = self._from_beam(beam)
+        ret = self._from_beam(beam, vocab)
         ret["gold_score"] = [0] * batch_size
         if "tgt" in batch.__dict__:
             ret["gold_score"] = self._run_target(batch, data)
@@ -596,7 +622,7 @@ class Translator(object):
 
         return ret
 
-    def _from_beam(self, beam):
+    def _from_beam(self, beam, vocab=None):
         ret = {"predictions": [],
                "scores": [],
                "attention": []}
@@ -605,7 +631,7 @@ class Translator(object):
             scores, ks = b.sort_finished(minimum=n_best)
             hyps, attn = [], []
             for i, (times, k) in enumerate(ks[:n_best]):
-                hyp, att = b.get_hyp(times, k)
+                hyp, att = b.get_hyp(times, k, vocab)
                 hyps.append(hyp)
                 attn.append(att)
             ret["predictions"].append(hyps)

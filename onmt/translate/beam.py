@@ -3,7 +3,7 @@ import torch
 from onmt.translate import penalties
 
 
-class Beam(object):
+class Beam(object):  # Constructed for each src sequence in a batch
     """
     Class for managing the internals of the beam search process.
 
@@ -37,8 +37,10 @@ class Beam(object):
 
         # The outputs at each time-step.
         self.next_ys = [self.tt.LongTensor(size)
-                        .fill_(pad)]
-        self.next_ys[0][0] = bos
+                        .fill_(pad)]  # [1 1 1]  #beamsize=3
+        self.next_ys[0][0] = bos      # [2 1 1]
+
+        #self.next_ys[-1][0] = "top of the beam"
 
         # Has EOS topped the beam yet.
         self._eos = eos
@@ -71,7 +73,7 @@ class Beam(object):
         "Get the backpointers for the current timestep."
         return self.prev_ks[-1]
 
-    def advance(self, word_probs, attn_out):
+    def advance(self, word_probs, attn_out, vocab=None):
         """
         Given prob over words for every last beam `wordLk` and attention
         `attn_out`: Compute and update the beam search.
@@ -122,8 +124,13 @@ class Beam(object):
                     if fail:
                         beam_scores[j] = -10e20
         else:
-            beam_scores = word_probs[0]
+            #  V
+            beam_scores = word_probs[0]  # First time: only k=1 matters
+
+        #                     K x V (only at first time V)
         flat_beam_scores = beam_scores.view(-1)
+
+        # Thus this searches K best from over all KV beam candidates.
         best_scores, best_scores_id = flat_beam_scores.topk(self.size, 0,
                                                             True, True)
 
@@ -145,9 +152,10 @@ class Beam(object):
                 self.finished.append((s, len(self.next_ys) - 1, i))
 
         # End condition is when top-of-beam is EOS and no global score.
-        if self.next_ys[-1][0] == self._eos:
-            self.all_scores.append(self.scores)
+        if self.next_ys[-1][0] == self._eos:  # [3, 19, 30]
             self.eos_top = True
+            if self.done():
+                self.all_scores.append(self.scores)
 
     def done(self):
         return self.eos_top and len(self.finished) >= self.n_best
@@ -162,15 +170,43 @@ class Beam(object):
                 self.finished.append((s, len(self.next_ys) - 1, i))
                 i += 1
 
-        self.finished.sort(key=lambda a: -a[0])
+        self.finished.sort(key=lambda a: -a[0])  # [(score_1, T'_1, k_1) ...]
         scores = [sc for sc, _, _ in self.finished]
         ks = [(t, k) for _, t, k in self.finished]
         return scores, ks
 
-    def get_hyp(self, timestep, k):
+    def get_hyp(self, timestep, k, vocab=None):
         """
         Walk back to construct the full hypothesis.
         """
+        # next_ys[j][k]: word index for state k at position j
+
+        # prev_ks[j][k]: state at previous position j-1 that leads to
+        #                state k at position j
+
+        print(len(self.next_ys))
+        print(len(self.all_scores))
+        print(len(self.prev_ks))
+        print(self.all_scores)
+        print()
+        for i in range(len(self.next_ys)):
+            if i > 0:
+                s = self.all_scores[i][k_].numpy() if i < len(self.all_scores) \
+                    else -float('inf')
+                for k_ in range(list(self.next_ys[i].size())[0]):
+                    print('%10s %5.2f %2d        ' % (
+                        vocab.itos[int(self.next_ys[i][k_].numpy())],
+                        s,
+                        self.prev_ks[i - 1][k_].numpy()), end='')
+                print()
+            else:
+                for k_ in range(list(self.next_ys[i].size())[0]):
+                    print('%10s %5.2f           ' % (
+                        vocab.itos[int(self.next_ys[i][k_].numpy())],
+                        self.all_scores[i][k_].numpy()),
+                          end='')
+                print()
+
         hyp, attn = [], []
         for j in range(len(self.prev_ks[:timestep]) - 1, -1, -1):
             hyp.append(self.next_ys[j + 1][k])

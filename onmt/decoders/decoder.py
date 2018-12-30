@@ -149,6 +149,7 @@ class RNNDecoderBase(nn.Module):
                                      for _ in self.state["hidden"]])
         self.state["input_feed"] = self.state["input_feed"].detach()
 
+    #         (T_tgt x B x 1) tgt -> (T_tgt x B x d) dec_outs
     def forward(self, tgt, memory_bank, memory_lengths=None,
                 step=None):
         """
